@@ -301,7 +301,7 @@ class _GamePageState extends State<GamePage> {
                                       _dictLoaded
                                           ? "Select size to start"
                                           : "Loading dictionary...",
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         color: _muted,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 16,
@@ -352,7 +352,7 @@ class _GamePageState extends State<GamePage> {
           ),
         ),
         const SizedBox(width: 16),
-        Expanded(
+        const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -365,7 +365,7 @@ class _GamePageState extends State<GamePage> {
                   letterSpacing: 0.5,
                 ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: 2),
               Text(
                 "Turkish word puzzle game",
                 style: TextStyle(
@@ -412,7 +412,7 @@ class _GamePageState extends State<GamePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "Game Controls",
               style: TextStyle(
                 fontSize: 18,
@@ -436,7 +436,7 @@ class _GamePageState extends State<GamePage> {
                     ),
                     child: DropdownButton<int>(
                       value: _size,
-                      hint: Text("Word Size", style: TextStyle(color: _muted)),
+                      hint: const Text("Word Size", style: TextStyle(color: _muted)),
                       isExpanded: true,
                       underline: const SizedBox.shrink(),
                       items: const [4, 5, 6]
@@ -495,7 +495,7 @@ class _GamePageState extends State<GamePage> {
               ),
               child: Text(
                 _status,
-                style: TextStyle(
+                style: const TextStyle(
                   color: _redA,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -588,7 +588,7 @@ class _GamePageState extends State<GamePage> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: _stroke),
                 ),
-                child: Text(
+                child: const Text(
                   "⌫ Delete",
                   style: TextStyle(
                     color: _redA,

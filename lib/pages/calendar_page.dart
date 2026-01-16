@@ -5,7 +5,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 
 import '../models/day_entry_model.dart';
-import '../repositories/calendar_repository.dart';
+import '../repositories/calendar_repository.dart' hide ymd;
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -315,9 +315,9 @@ class _CalendarPageState extends State<CalendarPage> {
           ),
         ),
         const SizedBox(width: 12),
-        Column(
+        const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text(
               "Memoria",
               style: TextStyle(
@@ -453,7 +453,7 @@ class _CalendarPageState extends State<CalendarPage> {
 
     // Sunday start: DateTime.weekday => Mon=1..Sun=7
     final startOffset = first.weekday % 7; // Sun=>0
-    final totalCells = 42;
+    const totalCells = 42;
 
     return GridView.builder(
       physics: const NeverScrollableScrollPhysics(),
@@ -640,8 +640,8 @@ class _CalendarPageState extends State<CalendarPage> {
             _photosRow(),
             const SizedBox(height: 16),
 
-            Row(
-              children: const [
+            const Row(
+              children: [
                 Icon(Icons.menu_book_rounded, color: _dot, size: 18),
                 SizedBox(width: 8),
                 Text(

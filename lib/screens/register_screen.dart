@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:convert';
 import '../theme/theme_manager.dart';
 import '../widgets/theme_toggle_button.dart';
+import '../services/api_service.dart';
 import 'email_verification_screen.dart';
 import 'login_screen.dart';
 
@@ -77,14 +77,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/api/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'name': name,
-          'email': email,
-          'password': password,
-        }),
+      final response = await ApiService.instance.register(
+        name: name,
+        email: email,
+        password: password,
       );
 
       if (mounted) {
@@ -116,9 +112,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         }
       } else {
         // Hata durumu
-        final errorData = jsonDecode(response.body);
-        final errorMessage = errorData['message'] ?? 'Kayıt başarısız oldu';
-        _showErrorSnackBar(errorMessage);
+        try {
+          final errorData = jsonDecode(response.body);
+          final errorMessage = errorData['error'] ?? errorData['message'] ?? 'Kayıt başarısız oldu';
+          _showErrorSnackBar(errorMessage);
+        } catch (e) {
+          _showErrorSnackBar('Kayıt başarısız oldu');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -150,7 +150,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text('Create Account'),
+        title: const Text('Hesap Oluştur'),
       ),
       body: Stack(
         children: [
@@ -168,7 +168,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       // Title
                       Text(
-                        'Join Us Today',
+                        'Bize Katılın',
                         style: theme.textTheme.headlineLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: colorScheme.onSurface,
@@ -179,7 +179,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       // Subtitle
                       Text(
-                        'Create your account and start your journey',
+                        'Hesabınızı oluşturun ve yolculuğunuza başlayın',
                         style: theme.textTheme.bodyLarge?.copyWith(
                           color: colorScheme.onSurface.withValues(alpha: 0.6),
                         ),
@@ -192,8 +192,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: nameController,
                         keyboardType: TextInputType.name,
                         decoration: InputDecoration(
-                          labelText: 'Full Name',
-                          hintText: 'Enter your name',
+                          labelText: 'Ad Soyad',
+                          hintText: 'Adınızı girin',
                           prefixIcon: Icon(
                             Icons.person_outline,
                             color: colorScheme.onSurfaceVariant,
@@ -225,8 +225,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          labelText: 'Email',
-                          hintText: 'Enter your email',
+                          labelText: 'E-posta',
+                          hintText: 'E-posta adresinizi girin',
                           prefixIcon: Icon(
                             Icons.email_outlined,
                             color: colorScheme.onSurfaceVariant,
@@ -258,8 +258,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: passwordController,
                         obscureText: obscurePassword,
                         decoration: InputDecoration(
-                          labelText: 'Password',
-                          hintText: 'Enter your password',
+                          labelText: 'Şifre',
+                          hintText: 'Şifrenizi girin',
                           prefixIcon: Icon(
                             Icons.lock_outline,
                             color: colorScheme.onSurfaceVariant,
@@ -304,8 +304,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         controller: confirmPasswordController,
                         obscureText: obscureConfirmPassword,
                         decoration: InputDecoration(
-                          labelText: 'Confirm Password',
-                          hintText: 'Re-enter your password',
+                          labelText: 'Şifre Tekrar',
+                          hintText: 'Şifrenizi tekrar girin',
                           prefixIcon: Icon(
                             Icons.lock_outline,
                             color: colorScheme.onSurfaceVariant,
@@ -368,7 +368,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   size: 24.0,
                                 )
                               : Text(
-                                  'Create Account',
+                                  'Hesap Oluştur',
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     color: colorScheme.onPrimary,
                                     fontWeight: FontWeight.w600,
@@ -385,7 +385,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'Already have an account? ',
+                              'Zaten hesabınız var mı? ',
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color:
                                     colorScheme.onSurface.withValues(alpha: 0.6),
@@ -402,7 +402,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 );
                               },
                               child: Text(
-                                'Sign in',
+                                'Giriş Yap',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: colorScheme.primary,
                                   fontWeight: FontWeight.w600,

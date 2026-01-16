@@ -22,4 +22,14 @@ class PersonalReminder {
       done: (r['done'] as int) == 1,
     );
   }
+
+  factory PersonalReminder.fromApi(Map<String, dynamic> json) {
+    return PersonalReminder(
+      id: json['id'] as int,
+      userId: json['user_id'] as int? ?? 1,
+      date: json['date'] as String,
+      text: json['text'] as String,
+      done: (json['done'] as int) == 1,
+    );
+  }
 }

@@ -1,6 +1,5 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
-import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 
 class AppDb {
@@ -16,7 +15,7 @@ class AppDb {
 
     _db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, _) async {
         await db.execute('''
         CREATE TABLE users (
@@ -97,6 +96,16 @@ class AppDb {
       ''');
 
         await db.execute('''
+        CREATE TABLE IF NOT EXISTS avatar_prefs (
+          user_id INTEGER PRIMARY KEY,
+          hair INTEGER NOT NULL DEFAULT 0,
+          eyes INTEGER NOT NULL DEFAULT 0,
+          outfit INTEGER NOT NULL DEFAULT 0,
+          FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+      ''');
+
+        await db.execute('''
         CREATE TABLE IF NOT EXISTS personal_reminders (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
@@ -128,6 +137,18 @@ class AppDb {
             date TEXT NOT NULL,
             text TEXT NOT NULL,
             done INTEGER NOT NULL DEFAULT 0
+          )
+        ''');
+        }
+        if (oldVersion < 4) {
+          // Version 3 -> 4: add avatar_prefs
+          await db.execute('''
+          CREATE TABLE IF NOT EXISTS avatar_prefs (
+            user_id INTEGER PRIMARY KEY,
+            hair INTEGER NOT NULL DEFAULT 0,
+            eyes INTEGER NOT NULL DEFAULT 0,
+            outfit INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users(id)
           )
         ''');
         }

@@ -1,6 +1,5 @@
-import 'package:sqflite/sqflite.dart';
-import '../db/app_db.dart';
-import '../services/session_service.dart';
+import 'dart:convert';
+import '../services/api_service.dart';
 import '../models/task_models.dart';
 
 abstract class TodosRepository {
@@ -15,96 +14,116 @@ abstract class TodosRepository {
   Future<void> deleteCapsule(int id);
 }
 
-class SqliteTodosRepository implements TodosRepository {
-  final Database db;
-  SqliteTodosRepository(this.db);
-
-  Future<int> _uid() async {
-    final uid = await SessionService.instance.getUserId();
-    if (uid == null) throw Exception("Not logged in");
-    return uid;
-  }
-
+class ApiTodosRepository implements TodosRepository {
   @override
   Future<List<TaskItem>> getTasks(String period) async {
-    final uid = await _uid();
-    final rows = await db.query(
-      'tasks',
-      where: 'user_id=? AND period=?',
-      whereArgs: [uid, period],
-      orderBy: 'id DESC',
-    );
-    return rows.map(TaskItem.fromRow).toList();
+    try {
+      final response = await ApiService.instance.getTasks(period: period);
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => TaskItem.fromApi(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('getTasks error: $e');
+      return [];
+    }
   }
 
   @override
   Future<void> addTask(String period, String title, DateTime? due) async {
-    final uid = await _uid();
-    await db.insert('tasks', {
-      'user_id': uid,
-      'period': period,
-      'title': title,
-      'done': 0,
-      'due_date': due?.toIso8601String(),
-    });
+    try {
+      await ApiService.instance.createTask(
+        period: period,
+        title: title,
+        dueDate: due?.toIso8601String(),
+      );
+    } catch (e) {
+      print('addTask error: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> updateTask(int id, String title, DateTime? due) async {
-    await db.update(
-      'tasks',
-      {'title': title, 'due_date': due?.toIso8601String()},
-      where: 'id=?',
-      whereArgs: [id],
-    );
+    try {
+      await ApiService.instance.updateTask(
+        id: id,
+        title: title,
+        dueDate: due?.toIso8601String(),
+      );
+    } catch (e) {
+      print('updateTask error: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> toggleDone(int id, bool done) async {
-    await db.update(
-      'tasks',
-      {'done': done ? 1 : 0},
-      where: 'id=?',
-      whereArgs: [id],
-    );
+    try {
+      await ApiService.instance.updateTask(
+        id: id,
+        done: done,
+      );
+    } catch (e) {
+      print('toggleDone error: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> deleteTask(int id) async {
-    await db.delete('tasks', where: 'id=?', whereArgs: [id]);
+    try {
+      await ApiService.instance.deleteTask(id);
+    } catch (e) {
+      print('deleteTask error: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<List<CapsuleItem>> getCapsules() async {
-    final uid = await _uid();
-    final rows = await db.query(
-      'capsules',
-      where: 'user_id=?',
-      whereArgs: [uid],
-      orderBy: 'unlock_at ASC',
-    );
-    return rows.map(CapsuleItem.fromRow).toList();
+    try {
+      final response = await ApiService.instance.getCapsules();
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        return data.map((json) => CapsuleItem.fromApi(json)).toList();
+      }
+      return [];
+    } catch (e) {
+      print('getCapsules error: $e');
+      return [];
+    }
   }
 
   @override
   Future<void> addCapsule(String note, DateTime unlockAt) async {
-    final uid = await _uid();
-    await db.insert('capsules', {
-      'user_id': uid,
-      'title': 'Time Capsule',
-      'note': note,
-      'unlock_at': unlockAt.toUtc().toIso8601String(),
-      'created_at': DateTime.now().toUtc().toIso8601String(),
-    });
+    try {
+      await ApiService.instance.createCapsule(
+        title: 'Time Capsule',
+        note: note,
+        unlockAt: unlockAt.toUtc().toIso8601String(),
+      );
+    } catch (e) {
+      print('addCapsule error: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> deleteCapsule(int id) async {
-    await db.delete('capsules', where: 'id=?', whereArgs: [id]);
+    try {
+      await ApiService.instance.deleteCapsule(id);
+    } catch (e) {
+      print('deleteCapsule error: $e');
+      rethrow;
+    }
   }
 }
 
 /// simple global access (later DI)
 class Repos {
-  static final TodosRepository todos = SqliteTodosRepository(AppDb.instance.db);
+  static final TodosRepository todos = ApiTodosRepository();
 }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/mood.dart';
-import '../repositories/mood_repository.dart';
+import '../services/api_service.dart';
 import '../theme/theme_manager.dart';
 import '../widgets/theme_toggle_button.dart';
 
@@ -17,15 +16,25 @@ class MoodSelectorScreen extends StatefulWidget {
 }
 
 class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
-  final MoodRepository _moodRepo = MoodRepository();
-
   double energy = 5;
   double happiness = 5;
   double stress = 5;
   bool _isLoading = true;
-  int? _todayMoodId; // Bugünkü mood'un ID'si
-  String? _aiMotivationMessage; // AI'dan gelen mesaj
-  bool _isLoadingAI = false; // AI yükleniyor mu?
+  bool _hasTodayMood = false;
+  String? _aiMotivationMessage;
+  bool _isLoadingAI = false;
+
+  // Theme constants (close to reference design)
+  static const _bgTopLight = Color(0xFFF6EEFF);
+  static const _bgBottomLight = Color(0xFFF2ECFF);
+  static const _bgTopDark = Color(0xFF140824);
+  static const _bgBottomDark = Color(0xFF0B0516);
+
+  static const _purpleA = Color(0xFF7B2CFF);
+  static const _purpleB = Color(0xFFA46BFF);
+
+  static const _muted = Color(0xFF8F7BB7);
+  static const _cardStroke = Color(0xFFEDE5FF);
 
   @override
   void initState() {
@@ -35,16 +44,24 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
 
   Future<void> _loadTodayMood() async {
     try {
-      final todayMood =
-          await _moodRepo.getTodayMoodByUserId(widget.userId ?? 1);
-      if (todayMood != null && mounted) {
-        setState(() {
-          _todayMoodId = todayMood.id;
-          energy = todayMood.energy.toDouble();
-          happiness = todayMood.happiness.toDouble();
-          stress = todayMood.stress.toDouble();
-          _isLoading = false;
-        });
+      final response = await ApiService.instance.getMoods(limit: 1);
+      
+      if (response.statusCode == 200) {
+        final moodsList = jsonDecode(response.body) as List;
+        if (mounted && moodsList.isNotEmpty) {
+          final data = moodsList.first;
+          setState(() {
+            _hasTodayMood = true;
+            energy = (data['energy'] ?? 5).toDouble();
+            happiness = (data['happiness'] ?? 5).toDouble();
+            stress = (data['stress'] ?? 5).toDouble();
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       } else {
         setState(() {
           _isLoading = false;
@@ -61,252 +78,381 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ruh Hali Seçimi'),
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      const Text(
-                        'Bugün nasıl hissediyorsun?',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-                      // AI Motivasyon Mesajı
-                      if (_aiMotivationMessage != null)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          margin: const EdgeInsets.only(bottom: 20),
-                          decoration: BoxDecoration(
-                            color: Colors.purple.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                                color: Colors.purple.shade200, width: 2),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+    return Scaffold(
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0.0, -0.25),
+                  radius: 1.25,
+                  colors: isDark
+                      ? const [_bgTopDark, _bgBottomDark]
+                      : const [_bgTopLight, _bgBottomLight],
+                ),
+              ),
+            ),
+          ),
+
+          SafeArea(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      _topBar(context),
+                      Expanded(
+                        child: Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 980),
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 22,
+                                vertical: 8,
+                              ),
+                              child: Column(
                                 children: [
-                                  Icon(Icons.auto_awesome,
-                                      color: Colors.purple.shade700, size: 20),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'AI Motivasyon',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.purple.shade900,
+                                  const SizedBox(height: 22),
+                                  _headerBlock(isDark),
+                                  const SizedBox(height: 34),
+                                  if (_aiMotivationMessage != null)
+                                    _aiBox(
+                                      isDark: isDark,
+                                      title: "AI Motivation",
+                                      text: _aiMotivationMessage!,
                                     ),
+                                  if (_isLoadingAI) _aiLoadingBox(isDark),
+                                  const SizedBox(height: 10),
+                                  _metricBlock(
+                                    isDark: isDark,
+                                    icon: Icons.bolt_rounded,
+                                    iconColor: const Color(0xFFFFA02D),
+                                    label: "Energy",
+                                    value: energy,
+                                    valueColor: const Color(0xFFFFA02D),
+                                    onChanged: (v) =>
+                                        setState(() => energy = v),
                                   ),
+                                  const SizedBox(height: 26),
+                                  _metricBlock(
+                                    isDark: isDark,
+                                    icon: Icons.favorite_border_rounded,
+                                    iconColor: const Color(0xFF20B16A),
+                                    label: "Happiness",
+                                    value: happiness,
+                                    valueColor: const Color(0xFF20B16A),
+                                    onChanged: (v) =>
+                                        setState(() => happiness = v),
+                                  ),
+                                  const SizedBox(height: 26),
+                                  _metricBlock(
+                                    isDark: isDark,
+                                    icon: Icons.error_outline_rounded,
+                                    iconColor: const Color(0xFFFF2D55),
+                                    label: "Stress",
+                                    value: stress,
+                                    valueColor: const Color(0xFFFF2D55),
+                                    onChanged: (v) =>
+                                        setState(() => stress = v),
+                                  ),
+                                  const SizedBox(height: 46),
+                                  _saveButton(isDark),
+                                  const SizedBox(height: 36),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                _aiMotivationMessage!,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  height: 1.4,
-                                  color: Colors.purple.shade900,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                      if (_isLoadingAI)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          margin: const EdgeInsets.only(bottom: 20),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.blue.shade700),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'AI motivasyon hazırlanıyor...',
-                                style: TextStyle(color: Colors.blue.shade900),
-                              ),
-                            ],
-                          ),
-                        ),
-                      const SizedBox(height: 20),
-
-                      // Enerji
-                      _buildMoodSlider(
-                        label: 'Enerji',
-                        value: energy,
-                        icon: Icons.flash_on,
-                        color: Colors.orange,
-                        onChanged: (value) {
-                          setState(() {
-                            energy = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Mutluluk
-                      _buildMoodSlider(
-                        label: 'Mutluluk',
-                        value: happiness,
-                        icon: Icons.sentiment_satisfied_alt,
-                        color: Colors.green,
-                        onChanged: (value) {
-                          setState(() {
-                            happiness = value;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Stres
-                      _buildMoodSlider(
-                        label: 'Stres',
-                        value: stress,
-                        icon: Icons.warning_amber,
-                        color: Colors.red,
-                        onChanged: (value) {
-                          setState(() {
-                            stress = value;
-                          });
-                        },
-                      ),
-
-                      const Spacer(),
-
-                      // Kaydet Butonu
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          onPressed: _saveMood,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: const Text(
-                            'Kaydet',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                ),
+          ),
 
-                // Theme Toggle Button - if available
-                if (widget.themeManager != null)
-                  ThemeToggleButton(themeManager: widget.themeManager!),
-              ],
-            ),
+          // Theme Toggle Button
+          if (widget.themeManager != null)
+            ThemeToggleButton(themeManager: widget.themeManager!),
+        ],
+      ),
     );
   }
 
-  Widget _buildMoodSlider({
-    required String label,
-    required double value,
-    required IconData icon,
-    required Color color,
-    required ValueChanged<double> onChanged,
-  }) {
+  Widget _topBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      child: Row(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => Navigator.pop(context),
+            child: const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Icon(Icons.arrow_back, color: _purpleA),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Spacer(),
+          const Text(
+            "Daily Reflection",
+            style: TextStyle(
+              color: _purpleA,
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const Spacer(),
+          const SizedBox(width: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _headerBlock(bool isDark) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                value.toInt().toString(),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ),
-          ],
+        Text(
+          "How do you feel today?",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 34,
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w500,
+            fontFamily: 'serif',
+            color: isDark ? Colors.white : const Color(0xFF2B2338),
+          ),
         ),
         const SizedBox(height: 8),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            activeTrackColor: color,
-            inactiveTrackColor: color.withOpacity(0.3),
-            thumbColor: color,
-            overlayColor: color.withOpacity(0.2),
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
-          ),
-          child: Slider(
-            value: value,
-            min: 1,
-            max: 10,
-            divisions: 9,
-            onChanged: onChanged,
+        Text(
+          "Take a moment to check in with yourself.",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: isDark ? Colors.white60 : _muted,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
     );
   }
 
+  Widget _metricBlock({
+    required bool isDark,
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required double value,
+    required Color valueColor,
+    required ValueChanged<double> onChanged,
+  }) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 760),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.06)
+                      : Colors.white.withOpacity(0.70),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark ? Colors.white12 : _cardStroke,
+                  ),
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? Colors.white : const Color(0xFF2B2338),
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                value.toInt().toString(),
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  color: valueColor,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              trackHeight: 4,
+              activeTrackColor: _purpleB,
+              inactiveTrackColor: _purpleB.withOpacity(0.22),
+              thumbColor: Colors.white,
+              overlayColor: _purpleA.withOpacity(0.10),
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
+              tickMarkShape: const RoundSliderTickMarkShape(tickMarkRadius: 0),
+            ),
+            child: Slider(
+              value: value,
+              min: 1,
+              max: 10,
+              divisions: 9,
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _saveButton(bool isDark) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 760),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: _saveMood,
+        child: Container(
+          height: 58,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: _purpleB,
+            boxShadow: [
+              BoxShadow(
+                color: _purpleA.withOpacity(isDark ? 0.25 : 0.18),
+                blurRadius: 28,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.save_outlined, color: Colors.white, size: 18),
+              SizedBox(width: 10),
+              Text(
+                "Save Reflection",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _aiBox({
+    required bool isDark,
+    required String title,
+    required String text,
+  }) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 760),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 18),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.white.withOpacity(0.76),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? Colors.white12 : _cardStroke),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.25 : 0.07),
+              blurRadius: 24,
+              offset: const Offset(0, 12),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.auto_awesome, color: _purpleA, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900,
+                    color: isDark ? Colors.white : const Color(0xFF2B2338),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              text,
+              style: TextStyle(
+                height: 1.35,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white70 : const Color(0xFF3A2A5E),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _aiLoadingBox(bool isDark) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 760),
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 18),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withOpacity(0.06)
+              : Colors.white.withOpacity(0.76),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? Colors.white12 : _cardStroke),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isDark ? Colors.white70 : _purpleA,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Preparing AI motivation...',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: isDark ? Colors.white70 : _muted,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<String?> _fetchAIMotivation() async {
     try {
-      final response = await http.post(/* 
-        Uri.parse('http://10.0.2.2:3000/api/motivation'), */
-        Uri.parse('http://localhost:3000/api/motivation'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'energy': energy.toInt(),
-          'happiness': happiness.toInt(),
-          'stress': stress.toInt(),
-          'note': '',
-        }),
+      final response = await ApiService.instance.getMotivation(
+        energy: energy.toInt(),
+        happiness: happiness.toInt(),
+        stress: stress.toInt(),
+        note: '',
       );
 
       if (response.statusCode == 200) {
@@ -324,50 +470,43 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
 
   Future<void> _saveMood() async {
     try {
-      final mood = Mood(
-        id: _todayMoodId, // Eğer bugün için zaten kayıt varsa ID'yi kullan
-        userId: widget.userId ?? 1,
+      // API'ye mood kaydet
+      final response = await ApiService.instance.saveMood(
         energy: energy.toInt(),
         happiness: happiness.toInt(),
         stress: stress.toInt(),
+        note: '',
       );
 
-      if (_todayMoodId != null) {
-        // Güncelleme
-        await _moodRepo.updateMood(mood);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() {
+          _hasTodayMood = true;
+        });
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ruh halin güncellendi!')),
+            SnackBar(content: Text(_hasTodayMood ? 'Ruh halin güncellendi!' : 'Ruh halin kaydedildi!')),
           );
+        }
+
+        // AI motivasyon mesajı al
+        if (mounted) {
+          setState(() {
+            _isLoadingAI = true;
+            _aiMotivationMessage = null;
+          });
+        }
+
+        final aiMessage = await _fetchAIMotivation();
+
+        if (mounted) {
+          setState(() {
+            _isLoadingAI = false;
+            _aiMotivationMessage = aiMessage ?? 'Motivasyon mesajı alınamadı.';
+          });
         }
       } else {
-        // Yeni kayıt
-        final newId = await _moodRepo.createMood(mood);
-        setState(() {
-          _todayMoodId = newId;
-        });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ruh halin kaydedildi!')),
-          );
-        }
-      }
-
-      // AI motivasyon mesajı al
-      if (mounted) {
-        setState(() {
-          _isLoadingAI = true;
-          _aiMotivationMessage = null;
-        });
-      }
-
-      final aiMessage = await _fetchAIMotivation();
-
-      if (mounted) {
-        setState(() {
-          _isLoadingAI = false;
-          _aiMotivationMessage = aiMessage ?? 'Motivasyon mesajı alınamadı.';
-        });
+        throw Exception('Mood kaydedilemedi: ${response.statusCode}');
       }
     } catch (e) {
       if (mounted) {

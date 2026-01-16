@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'screens/login_screen.dart';
@@ -9,6 +8,7 @@ import 'theme/app_theme.dart';
 import 'theme/theme_manager.dart';
 import 'db/app_db.dart';
 import 'services/auth_service.dart';
+import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,13 +89,31 @@ class _AuthCheckerState extends State<AuthChecker> {
   }
 
   Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
-
-    setState(() {
-      _isLoggedIn = isLoggedIn;
-      _isLoading = false;
-    });
+    // Token varsa profil endpoint'ine istek at
+    final token = await ApiService.instance.getToken();
+    
+    if (token != null) {
+      // Token varsa profil bilgilerini kontrol et
+      try {
+        final isAuthenticated = await ApiService.instance.isAuthenticated();
+        setState(() {
+          _isLoggedIn = isAuthenticated;
+          _isLoading = false;
+        });
+      } catch (e) {
+        // Token geçersiz, logout yap
+        await ApiService.instance.logout();
+        setState(() {
+          _isLoggedIn = false;
+          _isLoading = false;
+        });
+      }
+    } else {
+      setState(() {
+        _isLoggedIn = false;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
