@@ -6,6 +6,7 @@ import '../models/personal_reminder_model.dart';
 import '../services/session_service.dart';
 import 'focus_repository.dart';
 
+
 class SqliteFocusRepository implements FocusRepository {
   Database get _db => AppDb.instance.db;
 

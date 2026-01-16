@@ -1,34 +1,111 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-
+import 'package:intl/date_symbol_data_local.dart';
+import 'screens/login_screen.dart';
+import 'screens/home_screen.dart';
+import 'theme/app_theme.dart';
+import 'theme/theme_manager.dart';
 import 'db/app_db.dart';
 import 'services/auth_service.dart';
-import 'pages/hub_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ✅ enable SQLite on Windows
+  // Türkçe locale'i başlat
+  await initializeDateFormatting('tr_TR', null);
+
+  // Windows, Linux, macOS için sqflite_ffi başlatma
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
 
+  // Veritabanı ve auth servisini başlat
   await AppDb.instance.init();
   await AuthService.instance.ensureTestUserOnFirstLaunch();
 
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final ThemeManager _themeManager = ThemeManager();
+
+  @override
+  void initState() {
+    super.initState();
+    _themeManager.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _themeManager.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      title: 'LiP - Life in Pocket',
       debugShowCheckedModeBanner: false,
-      home: HubPage(),
+
+      // Tema yapılandırması - ThemeManager ile yönetiliyor
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: _themeManager.themeMode,
+
+      home: AuthChecker(themeManager: _themeManager),
     );
+  }
+}
+
+class AuthChecker extends StatefulWidget {
+  final ThemeManager themeManager;
+
+  const AuthChecker({required this.themeManager, super.key});
+
+  @override
+  State<AuthChecker> createState() => _AuthCheckerState();
+}
+
+class _AuthCheckerState extends State<AuthChecker> {
+  bool _isLoading = true;
+  bool _isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    setState(() {
+      _isLoggedIn = isLoggedIn;
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return _isLoggedIn
+        ? HomeScreen(themeManager: widget.themeManager)
+        : LoginScreen(themeManager: widget.themeManager);
   }
 }

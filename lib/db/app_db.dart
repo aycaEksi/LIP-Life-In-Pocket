@@ -62,27 +62,29 @@ class AppDb {
       ''');
 
         await db.execute('''
-        CREATE TABLE mood_ratings (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER NOT NULL,
-          date TEXT NOT NULL, -- YYYY-MM-DD
-          sociality INTEGER NOT NULL,
-          romance INTEGER NOT NULL,
-          success INTEGER NOT NULL,
-          mood INTEGER NOT NULL,
-          mean REAL NOT NULL,
-          UNIQUE(user_id, date)
-        );
-      ''');
+      CREATE TABLE moods (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        energy INTEGER,
+        happiness INTEGER,
+        stress INTEGER,
+        created_at TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    ''');
 
         await db.execute('''
-        CREATE TABLE avatar_prefs (
-          user_id INTEGER PRIMARY KEY,
-          hair INTEGER NOT NULL,
-          eyes INTEGER NOT NULL,
-          outfit INTEGER NOT NULL
-        );
-      ''');
+      CREATE TABLE avatars (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        hair_style TEXT,
+        hair_color TEXT,
+        outfit TEXT,
+        outfit_color TEXT,
+        updated_at TEXT,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    ''');
 
         await db.execute('''
         CREATE TABLE IF NOT EXISTS focus_daily (
@@ -137,5 +139,16 @@ class AppDb {
     final d = _db;
     if (d == null) throw StateError('DB not initialized');
     return d;
+  }
+
+  Future<Database> get database async {
+    if (_db != null) return _db!;
+    await init();
+    return _db!;
+  }
+
+  Future<void> close() async {
+    final db = _db;
+    if (db != null) await db.close();
   }
 }
