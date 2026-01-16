@@ -1,0 +1,49 @@
+class TaskItem {
+  final int id;
+  final String period;
+  final String title;
+  final bool done;
+  final DateTime? dueDate;
+
+  TaskItem({
+    required this.id,
+    required this.period,
+    required this.title,
+    required this.done,
+    required this.dueDate,
+  });
+
+  factory TaskItem.fromRow(Map<String, Object?> r) {
+    return TaskItem(
+      id: r['id'] as int,
+      period: r['period'] as String,
+      title: r['title'] as String,
+      done: (r['done'] as int) == 1,
+      dueDate: r['due_date'] == null
+          ? null
+          : DateTime.tryParse(r['due_date'] as String),
+    );
+  }
+}
+
+class CapsuleItem {
+  final int id;
+  final String note;
+  final DateTime unlockAtUtc;
+
+  CapsuleItem({
+    required this.id,
+    required this.note,
+    required this.unlockAtUtc,
+  });
+
+  bool get isUnlocked => !unlockAtUtc.isAfter(DateTime.now().toUtc());
+
+  factory CapsuleItem.fromRow(Map<String, Object?> r) {
+    return CapsuleItem(
+      id: r['id'] as int,
+      note: r['note'] as String,
+      unlockAtUtc: DateTime.parse(r['unlock_at'] as String),
+    );
+  }
+}
