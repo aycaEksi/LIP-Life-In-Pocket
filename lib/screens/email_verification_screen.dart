@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:convert';
 import '../theme/theme_manager.dart';
 import '../widgets/theme_toggle_button.dart';
+import '../services/api_service.dart';
 import 'login_screen.dart';
 
 class EmailVerificationScreen extends StatefulWidget {
@@ -46,18 +46,19 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       return;
     }
 
+    // Debug için log
+    print('Email: ${widget.email}');
+    print('Code: $code');
+    print('Code length: ${code.length}');
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/api/verify-email'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': widget.email,
-          'code': code,
-        }),
+      final response = await ApiService.instance.verifyCode(
+        email: widget.email,
+        code: code,
       );
 
       if (mounted) {
@@ -86,10 +87,18 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
           );
         }
       } else {
-        // Hata durumu
-        final errorData = jsonDecode(response.body);
-        final errorMessage = errorData['message'] ?? 'Doğrulama başarısız oldu';
-        _showErrorSnackBar(errorMessage);
+        // Hata durumu - detaylı log
+        print('❌ Hata Response Status: ${response.statusCode}');
+        print('❌ Hata Response Body: ${response.body}');
+        
+        try {
+          final errorData = jsonDecode(response.body);
+          final errorMessage = errorData['error'] ?? errorData['message'] ?? 'Doğrulama başarısız oldu';
+          _showErrorSnackBar(errorMessage);
+        } catch (e) {
+          print('❌ JSON parse hatası: $e');
+          _showErrorSnackBar('Doğrulama başarısız oldu: ${response.body}');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -116,12 +125,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     });
 
     try {
-      final response = await http.post(
-        Uri.parse('http://localhost:3000/api/resend-verification'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': widget.email,
-        }),
+      final response = await ApiService.instance.resendVerificationCode(
+        widget.email,
       );
 
       if (mounted) {

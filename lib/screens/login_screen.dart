@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'home_screen.dart';
 import 'register_screen.dart';
 import '../theme/theme_manager.dart';
 import '../widgets/theme_toggle_button.dart';
+import '../services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   final ThemeManager themeManager;
@@ -16,6 +18,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool obscurePassword = true;
+  bool _isLoading = false;
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -24,6 +27,89 @@ class _LoginScreenState extends State<LoginScreen> {
     emailController.dispose();
     passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+
+    // Validasyon
+    if (email.isEmpty) {
+      _showErrorSnackBar('Lütfen email adresinizi girin');
+      return;
+    }
+
+    if (password.isEmpty) {
+      _showErrorSnackBar('Lütfen şifrenizi girin');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final response = await ApiService.instance.login(
+        email: email,
+        password: password,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        // Token'ı kaydet
+        await ApiService.instance.saveToken(data['token']);
+        
+        // User bilgisini kaydet
+        await ApiService.instance.saveUser(data['user']);
+        
+        // Login durumunu kaydet
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('isLoggedIn', true);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message'] ?? 'Giriş başarılı!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          // Ana ekrana yönlendir
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomeScreen(themeManager: widget.themeManager),
+            ),
+          );
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        _showErrorSnackBar(errorData['message'] ?? 'Giriş başarısız');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorSnackBar('Bağlantı hatası: ${e.toString()}');
+      }
+    }
+  }
+
+  void _showErrorSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   @override
@@ -37,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).maybePop(),
         ),
-        title: const Text('Sign in'),
+        title: const Text('Giriş Yap'),
       ),
       body: Stack(
         children: [
@@ -54,7 +140,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Title
               Text(
-                'Welcome Back',
+                'Tekrar Hoş Geldiniz',
                 style: theme.textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.onSurface,
@@ -65,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               // Subtitle
               Text(
-                'Sign in to continue to your journal',
+                'Günlüğünüze devam etmek için giriş yapın',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
@@ -78,8 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'Enter your email',
+                  labelText: 'E-posta',
+                  hintText: 'E-posta adresinizi girin',
                   prefixIcon: Icon(
                     Icons.email_outlined,
                     color: colorScheme.onSurfaceVariant,
@@ -111,8 +197,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: passwordController,
                 obscureText: obscurePassword,
                 decoration: InputDecoration(
-                  labelText: 'Password',
-                  hintText: 'Enter your password',
+                  labelText: 'Şifre',
+                  hintText: 'Şifrenizi girin',
                   prefixIcon: Icon(
                     Icons.lock_outline,
                     color: colorScheme.onSurfaceVariant,
@@ -160,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Forgot password logic
                   },
                   child: Text(
-                    'Forgot Password?',
+                    'Şifremi Unuttum?',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: colorScheme.primary,
                       fontWeight: FontWeight.w600,
@@ -176,21 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 height: 56,
                 child: FilledButton(
-                  onPressed: () async {
-                    // Login durumunu kaydet
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('isLoggedIn', true);
-                    
-                    // Login başarılı, ana ekrana yönlendir
-                    if (mounted) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HomeScreen(themeManager: widget.themeManager),
-                        ),
-                      );
-                    }
-                  },
+                  onPressed: _isLoading ? null : _login,
                   style: FilledButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: colorScheme.onPrimary,
@@ -199,13 +271,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: Text(
-                    'Sign in',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.onPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              colorScheme.onPrimary,
+                            ),
+                          ),
+                        )
+                      : Text(
+                          'Giriş Yap',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: colorScheme.onPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
 
@@ -222,7 +305,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
-                      'OR',
+                      'VEYA',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
@@ -263,7 +346,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   child: Text(
-                    'Create Account',
+                    'Hesap Oluştur',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: colorScheme.primary,
                       fontWeight: FontWeight.w600,

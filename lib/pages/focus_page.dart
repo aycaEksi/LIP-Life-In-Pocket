@@ -6,7 +6,7 @@ import '../models/focus_day_model.dart';
 import '../models/personal_reminder_model.dart';
 
 import '../repositories/focus_repository.dart';
-import '../repositories/sqlite_focus_repository.dart';
+import '../repositories/api_focus_repository.dart';
 import '../services/notification_service.dart';
 import 'game_page.dart';
 
@@ -18,7 +18,7 @@ class FocusPage extends StatefulWidget {
 }
 
 class _FocusPageState extends State<FocusPage> {
-  final FocusRepository _repo = SqliteFocusRepository();
+  final FocusRepository _repo = ApiFocusRepository();
 
   // Timer
   Timer? _ticker;

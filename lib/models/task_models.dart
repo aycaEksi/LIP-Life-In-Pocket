@@ -24,6 +24,18 @@ class TaskItem {
           : DateTime.tryParse(r['due_date'] as String),
     );
   }
+
+  factory TaskItem.fromApi(Map<String, dynamic> json) {
+    return TaskItem(
+      id: json['id'] as int,
+      period: json['period'] as String,
+      title: json['title'] as String,
+      done: (json['done'] as int) == 1,
+      dueDate: json['due_date'] == null
+          ? null
+          : DateTime.tryParse(json['due_date'] as String),
+    );
+  }
 }
 
 class CapsuleItem {
@@ -44,6 +56,14 @@ class CapsuleItem {
       id: r['id'] as int,
       note: r['note'] as String,
       unlockAtUtc: DateTime.parse(r['unlock_at'] as String),
+    );
+  }
+
+  factory CapsuleItem.fromApi(Map<String, dynamic> json) {
+    return CapsuleItem(
+      id: json['id'] as int,
+      note: json['note'] as String,
+      unlockAtUtc: DateTime.parse(json['unlock_at'] as String),
     );
   }
 }

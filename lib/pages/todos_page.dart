@@ -357,7 +357,7 @@ class _TodosPageState extends State<TodosPage> {
 
   Widget _periodSelector({required bool isMobile}) {
     // pill segmented control like photo
-    final items = Period.values;
+    const items = Period.values;
 
     return Container(
       padding: const EdgeInsets.all(6),
@@ -593,7 +593,7 @@ class _TodosPageState extends State<TodosPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.access_time, size: 14, color: _chipAmberText),
+          const Icon(Icons.access_time, size: 14, color: _chipAmberText),
           const SizedBox(width: 6),
           Text(
             text,
@@ -676,8 +676,8 @@ class _TodosPageState extends State<TodosPage> {
                   ),
                 ],
               ),
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Icon(Icons.add, color: Colors.white),
                   SizedBox(width: 6),
                   Text(
@@ -1094,8 +1094,8 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
                             ),
                           ],
                         ),
-                        child: Row(
-                          children: const [
+                        child: const Row(
+                          children: [
                             Icon(Icons.add, color: Colors.white),
                             SizedBox(width: 8),
                             Text(

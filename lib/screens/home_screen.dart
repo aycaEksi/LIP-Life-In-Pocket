@@ -1,14 +1,18 @@
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import 'profile_screen.dart';
-import 'settings_screen.dart';
 import '../pages/focus_page.dart';
 import '../pages/calendar_page.dart';
 import '../pages/todos_page.dart';
+
 import '../theme/theme_manager.dart';
 import '../widgets/theme_toggle_button.dart';
-import '../repositories/avatar_repository.dart';
-import 'dart:math' as math;
-import 'package:intl/intl.dart';
+import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
   final ThemeManager themeManager;
@@ -20,56 +24,112 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AvatarRepository _avatarRepo = AvatarRepository();
   Map<String, dynamic>? _avatarData;
+  String _moodStatus = 'Yüklüyor...';
+  bool _isMoodLoading = true;
+
+  Timer? _clockTimer;
 
   @override
   void initState() {
     super.initState();
+    print('🚀 HomeScreen initState başladı');
     _loadAvatar();
+    _loadMoodStatus();
+    print('🚀 HomeScreen initState tamamlandı');
+
+    // update time on screen (every 10s)
+    _clockTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _clockTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadAvatar() async {
     try {
-      final avatar = await _avatarRepo.getLatestAvatarByUserId(1);
-      if (avatar != null && mounted) {
-        setState(() {
-          _parseAvatarData(avatar.hairStyle);
-        });
+      final response = await ApiService.instance.getAvatar();
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data != null && mounted) {
+          setState(() {
+            _parseAvatarFromApi(data);
+          });
+        }
       }
     } catch (e) {
       // Hata durumunda sessizce devam et
+      debugPrint('Avatar yükleme hatası: $e');
     }
   }
 
-  void _parseAvatarData(String dataString) {
+  Future<void> _loadMoodStatus() async {
+    print('🔍 _loadMoodStatus fonksiyonu BAŞLADI');
     try {
-      final genderMatch = RegExp(r"gender: (\w+)").firstMatch(dataString);
-      final skinMatch = RegExp(r"skinTone: (\w+)").firstMatch(dataString);
-      final eyeMatch = RegExp(r"eye: ([\w-]+)").firstMatch(dataString);
-      final eyeColorMatch =
-          RegExp(r"eyeColor: (#[0-9a-fA-F]{6})").firstMatch(dataString);
-      final bottomMatch =
-          RegExp(r"bottom: ([\w-]+|null)").firstMatch(dataString);
-      final bottomColorMatch =
-          RegExp(r"bottomColor: (#[0-9a-fA-F]{6})").firstMatch(dataString);
-      final topMatch = RegExp(r"top: ([\w-]+|null)").firstMatch(dataString);
-      final topColorMatch =
-          RegExp(r"topColor: (#[0-9a-fA-F]{6})").firstMatch(dataString);
+      print('🔍 Mood durumu yükleniyor...');
+      // Backend'den hazır durum bilgisini al
+      print('📞 API çağrısı yapılıyor: getLatestDurum()');
+      final response = await ApiService.instance.getLatestDurum();
+      
+      print('📡 Response status: ${response.statusCode}');
+      print('📡 Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        print('✅ Durum Response: $data');
+        print('🔑 Durum field: ${data['durum']}');
+        print('🔑 Data keys: ${data.keys.toList()}');
+        
+        if (mounted) {
+          final durumText = data['durum'] ?? 'Belirsiz';
+          print('📝 Setting moodStatus to: $durumText');
+          setState(() {
+            _moodStatus = durumText;
+            _isMoodLoading = false;
+          });
+          print('✅ setState completed, _moodStatus is now: $_moodStatus');
+        }
+      } else {
+        print('❌ Durum API hatası: ${response.statusCode}');
+        if (mounted) {
+          setState(() {
+            _moodStatus = 'Henüz kayıt yok';
+            _isMoodLoading = false;
+          });
+        }
+      }
+    } catch (e, stackTrace) {
+      print('❌ HATA YAKALANDI: $e');
+      print('❌ Stack trace: $stackTrace');
+      if (mounted) {
+        setState(() {
+          _moodStatus = 'Bilinmiyor';
+          _isMoodLoading = false;
+        });
+      }
+    }
+    print('🏁 _loadMoodStatus fonksiyonu BİTTİ');
+  }
 
+  void _parseAvatarFromApi(Map<String, dynamic> data) {
+    try {
       _avatarData = {
-        'gender': genderMatch?.group(1) ?? 'male',
-        'skinTone': skinMatch?.group(1) ?? 'light',
-        'eye': eyeMatch?.group(1) ?? 'male-eye',
-        'eyeColor': eyeColorMatch?.group(1) ?? '#8B4513',
-        'bottom':
-            bottomMatch?.group(1) != 'null' ? bottomMatch?.group(1) : null,
-        'bottomColor': bottomColorMatch?.group(1) ?? '#000000',
-        'top': topMatch?.group(1) != 'null' ? topMatch?.group(1) : null,
-        'topColor': topColorMatch?.group(1) ?? '#FFFFFF',
+        'gender': 'male', // API'den gelecek
+        'skinTone': 'light', // API'den gelecek
+        'eye': 'male-eye', // API'den gelecek
+        'eyeColor': '#8B4513', // API'den gelecek
+        'bottom': null,
+        'bottomColor': data['outfit_color'] ?? '#000000',
+        'top': data['outfit'] ?? null,
+        'topColor': data['outfit_color'] ?? '#FFFFFF',
       };
     } catch (e) {
-      // Hata durumunda default değerler kullanılır
+      debugPrint('Avatar parse hatası: $e');
     }
   }
 
@@ -81,133 +141,439 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final size = MediaQuery.of(context).size;
+    final isDark = theme.brightness == Brightness.dark;
+
+    final now = DateTime.now();
+    final dayTr = DateFormat('EEEE', 'tr_TR').format(now).toUpperCase();
+    final timeStr = DateFormat('HH:mm').format(now);
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Header - Sol Üst
-            Positioned(
-              top: 24,
-              left: 24,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Ayça Ekşi',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colorScheme.onSurface,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
+      body: Stack(
+        children: [
+          // BACKGROUND (light/dark with gradient + blobs)
+          Positioned.fill(child: _background(isDark: isDark)),
+
+          SafeArea(
+            child: Stack(
+              children: [
+                // TOP LEFT
+                Positioned(
+                  top: 22,
+                  left: 22,
+                  child: _topLeftHeader(isDark: isDark),
+                ),
+
+                // TOP RIGHT (DAY + TIME)
+                Positioned(
+                  top: 22,
+                  right: 22,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Icon(
-                        Icons.nights_stay,
-                        color: colorScheme.onSurface.withValues(alpha: 0.9),
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
                       Text(
-                        'Uykulu',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.9),
+                        dayTr,
+                        style: TextStyle(
+                          letterSpacing: 3.0,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          color: isDark
+                              ? Colors.white.withOpacity(0.75)
+                              : const Color(0xFF6C5A8D).withOpacity(0.75),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        timeStr,
+                        style: TextStyle(
+                          fontSize: 64,
+                          fontWeight: FontWeight.w900,
+                          height: 0.95,
+                          color:
+                              isDark ? Colors.white : const Color(0xFF14111C),
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
+                ),
 
-            // Header - Sağ Üst
-            Positioned(
-              top: 24,
-              right: 24,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    DateFormat('EEEE', 'tr_TR').format(DateTime.now()),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurface.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  Text(
-                    DateFormat('HH:mm').format(DateTime.now()),
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                // CENTER (avatar + 4 buttons)
+                Center(
+                  child: LayoutBuilder(
+                    builder: (context, c) {
+                      final size = MediaQuery.of(context).size;
 
-            // Merkez - Avatar ve Butonlar
-            Center(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  // Ekran boyutuna göre dinamik boyutlandırma
-                  final availableSize =
-                      math.min(size.width - 48, size.height - 200);
-                  final containerSize = math.min(availableSize, 400.0);
-                  final avatarSize = containerSize * 0.45; // %45
-                  final buttonSize = containerSize * 0.175; // %17.5
-                  final radius = containerSize * 0.35; // %35
+                      final available =
+                          math.min(size.width - 48, size.height - 200);
+                      final containerSize = math.min(available, 520.0);
 
-                  return SizedBox(
-                    width: containerSize,
-                    height: containerSize,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Merkez Avatar (Büyük)
-                        Container(
-                          width: avatarSize,
-                          height: avatarSize,
-                          decoration: BoxDecoration(
-                            color: colorScheme.surface,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.2),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: ClipOval(
-                            child: _avatarData != null
-                                ? _buildAvatarStack(avatarSize)
-                                : Icon(
-                                    Icons.person,
-                                    size: avatarSize * 0.44,
-                                    color: colorScheme.primary
-                                        .withValues(alpha: 0.3),
+                      final avatarSize = containerSize * 0.44;
+                      final ringSize = avatarSize * 1.22;
+
+                      final btnSize = containerSize * 0.16; // rounded-square
+                      final gap = containerSize * 0.34;
+
+                      return SizedBox(
+                        width: containerSize,
+                        height: containerSize,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // soft ring behind avatar
+                            Container(
+                              width: ringSize,
+                              height: ringSize,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.10)
+                                      : Colors.white.withOpacity(0.55),
+                                  width: 10,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: isDark
+                                        ? const Color(0xFF7B2CFF)
+                                            .withOpacity(0.25)
+                                        : const Color(0xFF7B2CFF)
+                                            .withOpacity(0.12),
+                                    blurRadius: 40,
+                                    spreadRadius: 6,
                                   ),
-                          ),
-                        ),
+                                ],
+                              ),
+                            ),
 
-                        // Çevreleyen Butonlar
-                        ..._buildCircularButtons(context, colorScheme,
-                            containerSize, buttonSize, radius),
-                      ],
-                    ),
-                  );
-                },
+                            // AVATAR CIRCLE
+                            Container(
+                              width: avatarSize,
+                              height: avatarSize,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.08)
+                                    : Colors.white.withOpacity(0.70),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(
+                                      isDark ? 0.35 : 0.12,
+                                    ),
+                                    blurRadius: 26,
+                                    offset: const Offset(0, 14),
+                                  ),
+                                ],
+                              ),
+                              child: ClipOval(
+                                child: _avatarData != null
+                                    ? _buildAvatarStack(avatarSize)
+                                    : Icon(
+                                        Icons.person,
+                                        size: avatarSize * 0.44,
+                                        color: isDark
+                                            ? Colors.white.withOpacity(0.35)
+                                            : const Color(0xFF7B2CFF)
+                                                .withOpacity(0.35),
+                                      ),
+                              ),
+                            ),
+
+                            // 4 BUTTONS around
+                            Positioned(
+                              top: (containerSize / 2) - gap - (btnSize / 2),
+                              child: _glassSquareButton(
+                                size: btnSize,
+                                icon: Icons.person_outline,
+                                hoverLabel: 'Profile',
+                                isDark: isDark,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ProfileScreen(
+                                        themeManager: widget.themeManager,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            Positioned(
+                              left: (containerSize / 2) - gap - (btnSize / 2),
+                              child: _glassSquareButton(
+                                size: btnSize,
+                                icon: Icons.access_time_rounded,
+                                hoverLabel: 'Focus Mode',
+                                isDark: isDark,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const FocusPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            Positioned(
+                              right: (containerSize / 2) - gap - (btnSize / 2),
+                              child: _glassSquareButton(
+                                size: btnSize,
+                                icon: Icons.calendar_month,
+                                hoverLabel: 'Diary Calendar',
+                                isDark: isDark,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const CalendarPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            Positioned(
+                              bottom: (containerSize / 2) - gap - (btnSize / 2),
+                              child: _glassSquareButton(
+                                size: btnSize,
+                                icon: Icons.check_box_outlined,
+                                hoverLabel: 'To-Do List',
+                                isDark: isDark,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const TodosPage(),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                // THEME TOGGLE (bottom-right)
+                ThemeToggleButton(themeManager: widget.themeManager),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _topLeftHeader({required bool isDark}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Ayça Ekşi',
+              style: TextStyle(
+                fontSize: 34,
+                fontWeight: FontWeight.w800,
+                color: isDark ? Colors.white : const Color(0xFF14111C),
+                letterSpacing: 0.2,
               ),
             ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.favorite,
+              size: 18,
+              color: isDark ? const Color(0xFFB27BFF) : const Color(0xFF7B2CFF),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Icon(
+              _isMoodLoading ? Icons.hourglass_empty : Icons.nights_stay,
+              size: 16,
+              color: isDark
+                  ? Colors.white.withOpacity(0.55)
+                  : const Color(0xFF6C5A8D).withOpacity(0.75),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'ŞU AN: ${_moodStatus.toUpperCase()}',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.0,
+                color: isDark
+                    ? Colors.white.withOpacity(0.55)
+                    : const Color(0xFF6C5A8D).withOpacity(0.75),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 
-            // Theme Toggle Button
-            ThemeToggleButton(themeManager: widget.themeManager),
+  Widget _background({required bool isDark}) {
+    if (!isDark) {
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(-0.8, -0.7),
+            radius: 1.6,
+            colors: [
+              Color(0xFFF5EDFF),
+              Color(0xFFF3EFFF),
+              Color(0xFFF6F2FF),
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            _softBlob(
+              alignment: const Alignment(-0.95, -0.75),
+              color: const Color(0xFFB07CFF).withOpacity(0.18),
+              size: 420,
+            ),
+            _softBlob(
+              alignment: const Alignment(0.85, -0.10),
+              color: const Color(0xFF7B2CFF).withOpacity(0.10),
+              size: 520,
+            ),
+            _softBlob(
+              alignment: const Alignment(0.35, 0.85),
+              color: const Color(0xFF2E6BFF).withOpacity(0.06),
+              size: 520,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment(-0.6, -0.55),
+          radius: 1.6,
+          colors: [
+            Color(0xFF140B26),
+            Color(0xFF10071F),
+            Color(0xFF0C0519),
           ],
         ),
       ),
+      child: Stack(
+        children: [
+          _softBlob(
+            alignment: const Alignment(-0.95, -0.65),
+            color: const Color(0xFF7B2CFF).withOpacity(0.22),
+            size: 520,
+          ),
+          _softBlob(
+            alignment: const Alignment(0.80, 0.05),
+            color: const Color(0xFFB27BFF).withOpacity(0.12),
+            size: 560,
+          ),
+          _softBlob(
+            alignment: const Alignment(0.30, 0.92),
+            color: const Color(0xFF2E6BFF).withOpacity(0.08),
+            size: 560,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _softBlob({
+    required Alignment alignment,
+    required Color color,
+    required double size,
+  }) {
+    return Align(
+      alignment: alignment,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color,
+          boxShadow: [
+            BoxShadow(
+              color: color,
+              blurRadius: 120,
+              spreadRadius: 30,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _glassSquareButton({
+    required double size,
+    required IconData icon,
+    required String hoverLabel,
+    required bool isDark,
+    required VoidCallback onTap,
+  }) {
+    final border = isDark
+        ? Colors.white.withOpacity(0.10)
+        : Colors.white.withOpacity(0.70);
+
+    final fill = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.white.withOpacity(0.55);
+
+    final iconColor =
+        isDark ? Colors.white.withOpacity(0.85) : const Color(0xFF7B2CFF);
+
+    return _HoverGrowSquare(
+      size: size,
+      onTap: onTap,
+      childBuilder: (hovered) {
+        final s = hovered ? size * 1.07 : size;
+
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          curve: Curves.easeOut,
+          width: s,
+          height: s,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(26),
+            color: fill,
+            border: Border.all(color: border, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(isDark ? 0.35 : 0.10),
+                blurRadius: hovered ? 30 : 26,
+                offset: const Offset(0, 14),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: s * 0.38, color: iconColor),
+              if (hovered) ...[
+                const SizedBox(height: 8),
+                Text(
+                  hoverLabel,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: isDark
+                        ? Colors.white.withOpacity(0.85)
+                        : const Color(0xFF3A2A5E),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -269,133 +635,36 @@ class _HomeScreenState extends State<HomeScreen> {
       ],
     );
   }
+}
 
-  List<Widget> _buildCircularButtons(
-    BuildContext context,
-    ColorScheme colorScheme,
-    double containerSize,
-    double buttonSize,
-    double radius,
-  ) {
-    final buttons = [
-      _CircularButton(
-        icon: Icons.person_outline,
-        label: 'Profil',
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  ProfileScreen(themeManager: widget.themeManager),
-            ),
-          );
-        },
-      ),
-      _CircularButton(
-        icon: Icons.help_outline,
-        label: 'Focus',
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const FocusPage()),
-          );
-        },
-      ),
-      _CircularButton(
-        icon: Icons.calendar_month,
-        label: 'Takvim',
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const CalendarPage()),
-          );
-        },
-      ),
-      _CircularButton(
-        icon: Icons.timer_outlined,
-        label: 'Görevler',
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const TodosPage()),
-          );
-        },
-      ),
-      _CircularButton(
-        icon: Icons.settings,
-        label: 'Ayarlar',
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  SettingsScreen(themeManager: widget.themeManager),
-            ),
-          );
-        },
-      ),
-    ];
+class _HoverGrowSquare extends StatefulWidget {
+  final double size;
+  final VoidCallback onTap;
+  final Widget Function(bool hovered) childBuilder;
 
-    return List.generate(buttons.length, (index) {
-      final angle = (index * 2 * math.pi / buttons.length) - math.pi / 2;
-      final x = radius * math.cos(angle);
-      final y = radius * math.sin(angle);
+  const _HoverGrowSquare({
+    required this.size,
+    required this.onTap,
+    required this.childBuilder,
+  });
 
-      return Positioned(
-        left: (containerSize / 2) + x - (buttonSize / 2),
-        top: (containerSize / 2) + y - (buttonSize / 2),
-        child: _buildButton(
-          context,
-          buttons[index].icon,
-          buttons[index].onTap,
-          colorScheme,
-          buttonSize,
-        ),
-      );
-    });
-  }
+  @override
+  State<_HoverGrowSquare> createState() => _HoverGrowSquareState();
+}
 
-  Widget _buildButton(
-    BuildContext context,
-    IconData icon,
-    VoidCallback onTap,
-    ColorScheme colorScheme,
-    double size,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: colorScheme.surface,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Icon(
-          icon,
-          size: size * 0.45, // Icon boyutu buton boyutunun %45'i
-          color: colorScheme.primary,
-        ),
+class _HoverGrowSquareState extends State<_HoverGrowSquare> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: widget.onTap,
+        child: widget.childBuilder(_hovered),
       ),
     );
   }
-}
-
-class _CircularButton {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  _CircularButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
 }

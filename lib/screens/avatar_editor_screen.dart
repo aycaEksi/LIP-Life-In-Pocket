@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import '../models/avatar.dart';
-import '../repositories/avatar_repository.dart';
+import 'dart:convert';
+import '../services/api_service.dart';
 import '../theme/theme_manager.dart';
 import '../widgets/theme_toggle_button.dart';
 
@@ -16,7 +16,6 @@ class AvatarEditorScreen extends StatefulWidget {
 }
 
 class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
-  final AvatarRepository _avatarRepo = AvatarRepository();
   bool _isLoading = true;
 
   // Seçili özellikler
@@ -54,69 +53,23 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
 
   Future<void> _loadAvatar() async {
     try {
-      final avatar =
-          await _avatarRepo.getLatestAvatarByUserId(widget.userId ?? 1);
-      if (avatar != null && mounted) {
-        setState(() {
-          // Avatar verilerini parse et
-          final data = avatar.hairStyle; // JSON string olarak saklanmış
-          if (data.contains('gender')) {
-            final genderMatch = RegExp(r"gender: (\w+)").firstMatch(data);
-            final skinMatch = RegExp(r"skinTone: (\w+)").firstMatch(data);
-            final eyeMatch = RegExp(r"eye: ([\w-]+)").firstMatch(data);
-            final eyeColorMatch =
-                RegExp(r"eyeColor: (#[\w]+)").firstMatch(data);
-            final bottomMatch = RegExp(r"bottom: ([\w-]+)").firstMatch(data);
-            final bottomColorMatch =
-                RegExp(r"bottomColor: (#[\w]+)").firstMatch(data);
-            final topMatch = RegExp(r"top: ([\w-]+)").firstMatch(data);
-            final topColorMatch =
-                RegExp(r"topColor: (#[\w]+)").firstMatch(data);
-
-            if (genderMatch != null) selectedGender = genderMatch.group(1)!;
-            if (skinMatch != null) selectedSkinTone = skinMatch.group(1)!;
-
-            if (eyeMatch != null && eyeMatch.group(1) != 'null') {
-              selectedEye = eyeMatch.group(1)!;
-            } else {
-              selectedEye =
-                  selectedGender == 'male' ? 'male-eye' : 'female-eye';
-            }
-
-            if (eyeColorMatch != null) {
-              selectedEyeColor = _hexToColor(eyeColorMatch.group(1)!);
-            }
-
-            if (bottomMatch != null && bottomMatch.group(1) != 'null') {
-              selectedBottomWear = bottomMatch.group(1)!;
-            }
-            if (bottomColorMatch != null) {
-              selectedBottomColor = _hexToColor(bottomColorMatch.group(1)!);
-            }
-
-            if (topMatch != null && topMatch.group(1) != 'null') {
-              selectedTopWear = topMatch.group(1)!;
-            }
-            if (topColorMatch != null) {
-              selectedTopColor = _hexToColor(topColorMatch.group(1)!);
-            }
-          }
-        });
-      } else {
-        // Yeni avatar için default göz seç
-        if (mounted) {
+      final response = await ApiService.instance.getAvatar();
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data != null && mounted) {
           setState(() {
-            selectedEye = selectedGender == 'male' ? 'male-eye' : 'female-eye';
+            // Backend'den gelen verilerle avatar'ı güncelle
+            // Şimdilik basit bir yapı kullanıyoruz
+            selectedTopWear = data['outfit'];
+            if (data['outfit_color'] != null) {
+              selectedTopColor = _hexToColor(data['outfit_color']);
+            }
           });
         }
       }
     } catch (e) {
-      // Hata olursa default değerler kalır
-      if (mounted) {
-        setState(() {
-          selectedEye = selectedGender == 'male' ? 'male-eye' : 'female-eye';
-        });
-      }
+      debugPrint('Avatar yükleme hatası: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -776,43 +729,11 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
             '${color.blue.toRadixString(16).padLeft(2, '0')}';
       }
 
-      // Avatar verilerini JSON formatında sakla
-      final avatarData = {
-        'gender': selectedGender,
-        'skinTone': selectedSkinTone,
-        'eye': selectedEye,
-        'eyeColor': colorToHex(selectedEyeColor),
-        'bottom': selectedBottomWear,
-        'bottomColor': colorToHex(selectedBottomColor),
-        'top': selectedTopWear,
-        'topColor': colorToHex(selectedTopColor),
-      };
-
-      final avatar = Avatar(
-        userId: widget.userId ?? 1,
-        hairStyle: avatarData.toString(),
-        hairColor: colorToHex(selectedEyeColor),
-        outfit: selectedTopWear ?? 'none',
+      // API'ye avatar kaydet
+      await ApiService.instance.updateAvatar(
+        outfit: selectedTopWear,
         outfitColor: colorToHex(selectedTopColor),
       );
-
-      // Önce mevcut avatarı kontrol et
-      final existingAvatar =
-          await _avatarRepo.getLatestAvatarByUserId(widget.userId ?? 1);
-      if (existingAvatar != null) {
-        // Güncelle
-        final updatedAvatar = Avatar(
-          id: existingAvatar.id,
-          userId: widget.userId ?? 1,
-          hairStyle: avatarData.toString(),
-          hairColor: colorToHex(selectedEyeColor),
-          outfit: selectedTopWear ?? 'none',
-          outfitColor: colorToHex(selectedTopColor),
-        );
-        await _avatarRepo.updateAvatar(updatedAvatar);
-      } else {
-        await _avatarRepo.createAvatar(avatar);
-      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

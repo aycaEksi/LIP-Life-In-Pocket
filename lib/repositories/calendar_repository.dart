@@ -1,6 +1,5 @@
-import 'package:sqflite/sqflite.dart';
-import '../db/app_db.dart';
-import '../services/session_service.dart';
+import 'dart:convert';
+import '../services/api_service.dart';
 import '../models/day_entry_model.dart';
 
 abstract class CalendarRepository {
@@ -17,58 +16,56 @@ abstract class CalendarRepository {
   Future<void> deleteEntryByDate(DateTime date);
 }
 
-class SqliteCalendarRepository implements CalendarRepository {
-  final Database db;
-  SqliteCalendarRepository(this.db);
-
-  Future<int> _uid() async {
-    final uid = await SessionService.instance.getUserId();
-    if (uid == null) throw StateError("Not logged in");
-    return uid;
-  }
-
+class ApiCalendarRepository implements CalendarRepository {
   @override
   Future<Set<int>> getDaysWithDataInMonth(DateTime viewMonthFirstDay) async {
-    final uid = await _uid();
-
-    final start = DateTime(viewMonthFirstDay.year, viewMonthFirstDay.month, 1);
-    final end = DateTime(
-      viewMonthFirstDay.year,
-      viewMonthFirstDay.month + 1,
-      1,
-    );
-
-    final rows = await db.query(
-      'day_entries',
-      columns: ['date'],
-      where: 'user_id=? AND date>=? AND date<?',
-      whereArgs: [uid, ymd(start), ymd(end)],
-    );
-
-    final out = <int>{};
-    for (final r in rows) {
-      final s = (r['date'] as String?) ?? '';
-      if (s.length >= 10) {
-        final dd = int.tryParse(s.substring(8, 10));
-        if (dd != null) out.add(dd);
+    try {
+      final response = await ApiService.instance.getAllDayEntries();
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        
+        final start = DateTime(viewMonthFirstDay.year, viewMonthFirstDay.month, 1);
+        final end = DateTime(viewMonthFirstDay.year, viewMonthFirstDay.month + 1, 1);
+        
+        final out = <int>{};
+        for (final item in data) {
+          final dateStr = item['date'] as String?;
+          if (dateStr != null && dateStr.length >= 10) {
+            final entryDate = DateTime.tryParse(dateStr);
+            if (entryDate != null && 
+                entryDate.isAfter(start.subtract(const Duration(days: 1))) &&
+                entryDate.isBefore(end)) {
+              final dd = int.tryParse(dateStr.substring(8, 10));
+              if (dd != null) out.add(dd);
+            }
+          }
+        }
+        return out;
       }
+      return {};
+    } catch (e) {
+      print('getDaysWithDataInMonth error: $e');
+      return {};
     }
-    return out;
   }
 
   @override
   Future<DayEntry?> getEntryByDate(DateTime date) async {
-    final uid = await _uid();
-
-    final rows = await db.query(
-      'day_entries',
-      where: 'user_id=? AND date=?',
-      whereArgs: [uid, ymd(date)],
-      limit: 1,
-    );
-
-    if (rows.isEmpty) return null;
-    return DayEntry.fromRow(rows.first);
+    try {
+      final response = await ApiService.instance.getDayEntry(ymd(date));
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data != null) {
+          return DayEntry.fromApi(data);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('getEntryByDate error: $e');
+      return null;
+    }
   }
 
   @override
@@ -78,33 +75,41 @@ class SqliteCalendarRepository implements CalendarRepository {
     required String? photo1Path,
     required String? photo2Path,
   }) async {
-    final uid = await _uid();
-
-    final cleaned = (note ?? '').trim();
-
-    await db.insert('day_entries', {
-      'user_id': uid,
-      'date': ymd(date),
-      'note': cleaned.isEmpty ? null : cleaned,
-      'photo1_path': photo1Path,
-      'photo2_path': photo2Path,
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    try {
+      final cleaned = (note ?? '').trim();
+      
+      await ApiService.instance.saveDayEntry(
+        date: ymd(date),
+        note: cleaned.isEmpty ? null : cleaned,
+        photo1Url: photo1Path,
+        photo2Url: photo2Path,
+      );
+    } catch (e) {
+      print('upsertEntry error: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> deleteEntryByDate(DateTime date) async {
-    final uid = await _uid();
-
-    await db.delete(
-      'day_entries',
-      where: 'user_id=? AND date=?',
-      whereArgs: [uid, ymd(date)],
-    );
+    try {
+      // Backend'de delete endpoint'i yok, boş bir entry kaydet
+      await ApiService.instance.saveDayEntry(
+        date: ymd(date),
+        note: null,
+        photo1Url: null,
+        photo2Url: null,
+      );
+    } catch (e) {
+      print('deleteEntryByDate error: $e');
+      rethrow;
+    }
   }
 }
 
+String ymd(DateTime dt) =>
+    '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+
 class CalendarRepos {
-  static final CalendarRepository calendar = SqliteCalendarRepository(
-    AppDb.instance.db,
-  );
+  static final CalendarRepository calendar = ApiCalendarRepository();
 }

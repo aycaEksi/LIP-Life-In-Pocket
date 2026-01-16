@@ -41,6 +41,15 @@ class FocusDay {
     );
   }
 
+  factory FocusDay.fromApi(Map<String, dynamic> json) {
+    return FocusDay(
+      userId: json['user_id'] as int? ?? 1,
+      date: json['date'] as String,
+      hydrationCount: (json['hydration_count'] as int?) ?? 0,
+      movementCount: (json['movement_count'] as int?) ?? 0,
+    );
+  }
+
   Map<String, Object?> toRow() => {
     'user_id': userId,
     'date': date,

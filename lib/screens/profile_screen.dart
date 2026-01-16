@@ -1,4 +1,6 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
+
 import 'avatar_editor_screen.dart';
 import 'mood_selector_screen.dart';
 import 'settings_screen.dart';
@@ -7,7 +9,7 @@ import '../widgets/theme_toggle_button.dart';
 
 class ProfileScreen extends StatefulWidget {
   final ThemeManager themeManager;
-  
+
   const ProfileScreen({required this.themeManager, super.key});
 
   @override
@@ -15,160 +17,347 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  int? _hovered;
+
+  // --- colors close to reference ---
+  static const _bgTopLight = Color(0xFFF6EEFF);
+  static const _bgBottomLight = Color(0xFFEDE6FF);
+
+  static const _bgTopDark = Color(0xFF140824);
+  static const _bgBottomDark = Color(0xFF0B0516);
+
+  static const _cardStroke = Color(0xFFE8DFFF);
+  static const _cardFillA = Color(0xFFECE6FF);
+  static const _cardFillB = Color(0xFFF3E8FF);
+
+  static const _purple = Color(0xFF7B2CFF);
+  static const _purple2 = Color(0xFFA46BFF);
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil'),
-        centerTitle: true,
-        elevation: 0,
-      ),
       body: Stack(
         children: [
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 600),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 20),
-                    // Avatar Düzenleme Butonu
-                    _buildProfileButton(
-                      context: context,
-                      icon: Icons.person_outline,
-                      title: 'Avatar Düzenleme',
-                      subtitle: 'Karakterini özelleştir',
-                      color: Colors.blue,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AvatarEditorScreen(themeManager: widget.themeManager),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Ruh Hali Seçme Butonu
-                    _buildProfileButton(
-                      context: context,
-                      icon: Icons.emoji_emotions_outlined,
-                      title: 'Ruh Hali',
-                      subtitle: 'Bugünkü ruh halini seç',
-                      color: Colors.orange,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MoodSelectorScreen(themeManager: widget.themeManager),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Ayarlar Butonu
-                    _buildProfileButton(
-                      context: context,
-                      icon: Icons.settings_outlined,
-                      title: 'Ayarlar',
-                      subtitle: 'Uygulama ayarlarını düzenle',
-                      color: Colors.grey,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SettingsScreen(themeManager: widget.themeManager),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+          // background
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0.0, -0.25),
+                  radius: 1.25,
+                  colors: isDark
+                      ? const [_bgTopDark, _bgBottomDark]
+                      : const [_bgTopLight, _bgBottomLight],
                 ),
               ),
             ),
           ),
-          
-          // Theme Toggle Button
+
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+              child: Column(
+                children: [
+                  _topBar(context, isDark),
+                  const SizedBox(height: 26),
+                  Expanded(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1100),
+                        child: LayoutBuilder(
+                          builder: (context, c) {
+                            final w = c.maxWidth;
+                            final isNarrow = w < 900;
+
+                            final cards = <_ProfileCardData>[
+                              _ProfileCardData(
+                                title: "Avatar",
+                                subtitle: "Personalize your avatar",
+                                icon: Icons.person_outline,
+                                tint: const Color(0xFF7B2CFF),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => AvatarEditorScreen(
+                                        themeManager: widget.themeManager,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              _ProfileCardData(
+                                title: "Settings",
+                                subtitle: "Log out or view Profile",
+                                icon: Icons.settings_outlined,
+                                tint: const Color(0xFF4B55FF),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => SettingsScreen(
+                                        themeManager: widget.themeManager,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              _ProfileCardData(
+                                title: "Mood",
+                                subtitle:
+                                    "Rate your day and get your AI\nadvice!",
+                                icon: Icons.emoji_emotions_outlined,
+                                tint: const Color(0xFFB000FF),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => MoodSelectorScreen(
+                                        themeManager: widget.themeManager,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ];
+
+                            if (isNarrow) {
+                              return Wrap(
+                                spacing: 18,
+                                runSpacing: 18,
+                                alignment: WrapAlignment.center,
+                                children: List.generate(
+                                  cards.length,
+                                  (i) => _profileCard(
+                                    data: cards[i],
+                                    index: i,
+                                    isDark: isDark,
+                                    // square-ish on narrow too
+                                    size: math.min(330, w),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final size = math.min(340.0, w / 3.2);
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _profileCard(
+                                  data: cards[0],
+                                  index: 0,
+                                  isDark: isDark,
+                                  size: size,
+                                ),
+                                const SizedBox(width: 22),
+                                _profileCard(
+                                  data: cards[1],
+                                  index: 1,
+                                  isDark: isDark,
+                                  size: size,
+                                ),
+                                const SizedBox(width: 22),
+                                _profileCard(
+                                  data: cards[2],
+                                  index: 2,
+                                  isDark: isDark,
+                                  size: size,
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // theme toggle button
           ThemeToggleButton(themeManager: widget.themeManager),
         ],
       ),
     );
   }
 
-  Widget _buildProfileButton({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSmallScreen = screenWidth < 360;
-    
-    return Material(
-      elevation: 4,
-      borderRadius: BorderRadius.circular(16),
-      color: colorScheme.surface,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  icon,
-                  size: isSmallScreen ? 28 : 32,
-                  color: color,
-                ),
-              ),
-              SizedBox(width: isSmallScreen ? 12 : 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _topBar(BuildContext context, bool isDark) {
+    return SizedBox(
+      height: 56,
+      child: Stack(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () => Navigator.pop(context),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: isSmallScreen ? 16 : 18,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
+                    Icon(
+                      Icons.arrow_back,
+                      size: 18,
+                      color: isDark ? Colors.white70 : _purple,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(width: 8),
                     Text(
-                      subtitle,
+                      "GERI DÖN",
                       style: TextStyle(
-                        fontSize: isSmallScreen ? 12 : 14,
-                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        letterSpacing: 1.1,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                        color: isDark ? Colors.white70 : _purple,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(
-                Icons.arrow_forward_ios,
-                color: colorScheme.onSurface.withValues(alpha: 0.4),
-                size: isSmallScreen ? 18 : 20,
+            ),
+          ),
+          Align(
+            alignment: Alignment.center,
+            child: Text(
+              "Profile",
+              style: TextStyle(
+                fontSize: 46,
+                fontWeight: FontWeight.w700,
+                fontFamily: "serif",
+                color: isDark ? Colors.white : const Color(0xFF2B2338),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _profileCard({
+    required _ProfileCardData data,
+    required int index,
+    required bool isDark,
+    required double size,
+  }) {
+    final hovered = _hovered == index;
+
+    final baseFill = isDark
+        ? const LinearGradient(
+            colors: [Color(0xFF221038), Color(0xFF1A0C2E)],
+          )
+        : const LinearGradient(colors: [_cardFillA, _cardFillB]);
+
+    final cardShadow = hovered
+        ? [
+            BoxShadow(
+              color: (isDark ? Colors.black : _purple).withOpacity(0.22),
+              blurRadius: 32,
+              offset: const Offset(0, 18),
+            ),
+          ]
+        : [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDark ? 0.35 : 0.16),
+              blurRadius: 28,
+              offset: const Offset(0, 16),
+            ),
+          ];
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = index),
+      onExit: (_) => setState(() => _hovered = null),
+      child: GestureDetector(
+        onTap: data.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          width: size,
+          height: size,
+          transformAlignment: Alignment.center,
+          // grow + "lean right"
+          transform: Matrix4.identity()
+            ..translate(0.0, hovered ? -6.0 : 0.0)
+            ..scale(hovered ? 1.06 : 1.0)
+            ..rotateZ(hovered ? 0.04 : 0.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(34),
+            gradient: baseFill,
+            border: Border.all(
+              color: isDark ? Colors.white10 : _cardStroke,
+              width: 1.2,
+            ),
+            boxShadow: cardShadow,
+          ),
+          child: Stack(
+            children: [
+              // little sparkle
+              Positioned(
+                right: 16,
+                top: 16,
+                child: Icon(
+                  Icons.auto_awesome,
+                  size: 18,
+                  color: isDark ? Colors.white24 : _purple.withOpacity(0.35),
+                ),
+              ),
+
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut,
+                      width: hovered ? 108 : 98,
+                      height: hovered ? 108 : 98,
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.06)
+                            : Colors.white.withOpacity(0.55),
+                        borderRadius: BorderRadius.circular(26),
+                      ),
+                      child: Icon(
+                        data.icon,
+                        size: hovered ? 54 : 50,
+                        color: data.tint,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      data.title,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: data.tint,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 160),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeOut,
+                      child: hovered
+                          ? Text(
+                              data.subtitle,
+                              key: ValueKey("sub_$index"),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                height: 1.2,
+                                fontWeight: FontWeight.w700,
+                                color: data.tint.withOpacity(0.9),
+                              ),
+                            )
+                          : const SizedBox(
+                              key: ValueKey("sub_empty"),
+                              height: 0,
+                            ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -176,4 +365,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+}
+
+class _ProfileCardData {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color tint;
+  final VoidCallback onTap;
+
+  _ProfileCardData({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.tint,
+    required this.onTap,
+  });
 }

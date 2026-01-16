@@ -19,6 +19,15 @@ class DayEntry {
       photo2Path: r['photo2_path'] as String?,
     );
   }
+
+  factory DayEntry.fromApi(Map<String, dynamic> json) {
+    return DayEntry(
+      date: json['date'] as String? ?? '',
+      note: json['note'] as String?,
+      photo1Path: json['photo1_url'] as String?,
+      photo2Path: json['photo2_url'] as String?,
+    );
+  }
 }
 
 // helper (same as before)
