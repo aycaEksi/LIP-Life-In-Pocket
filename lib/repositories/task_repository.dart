@@ -5,18 +5,15 @@ import '../models/task.dart';
 class TaskRepository {
   Database get db => AppDb.instance.db;
 
-  // Create
   Future<int> createTask(Task task) async {
     return await db.insert('tasks', task.toMap());
   }
 
-  // Read - Tüm görevleri getirme
   Future<List<Task>> getAllTasks() async {
     final result = await db.query('tasks', orderBy: 'created_at DESC');
     return result.map((map) => Task.fromMap(map)).toList();
   }
 
-  // Read - ID ile görev getirme
   Future<Task?> getTaskById(int id) async {
     final result = await db.query(
       'tasks',
@@ -29,7 +26,6 @@ class TaskRepository {
     return null;
   }
 
-  // Read - Kullanıcıya ait görevleri getirme
   Future<List<Task>> getTasksByUserId(int userId) async {
     final result = await db.query(
       'tasks',
@@ -40,7 +36,7 @@ class TaskRepository {
     return result.map((map) => Task.fromMap(map)).toList();
   }
 
-  // Read - Görev tipine göre getirme (daily, weekly, monthly, yearly)
+// ayda yılda 1 olsa da muhakkak ara
   Future<List<Task>> getTasksByType(int userId, String taskType) async {
     final result = await db.query(
       'tasks',
@@ -51,7 +47,6 @@ class TaskRepository {
     return result.map((map) => Task.fromMap(map)).toList();
   }
 
-  // Read - Tamamlanmış görevleri getirme
   Future<List<Task>> getCompletedTasks(int userId) async {
     final result = await db.query(
       'tasks',
@@ -62,7 +57,6 @@ class TaskRepository {
     return result.map((map) => Task.fromMap(map)).toList();
   }
 
-  // Read - Tamamlanmamış görevleri getirme
   Future<List<Task>> getIncompleteTasks(int userId) async {
     final result = await db.query(
       'tasks',
@@ -73,7 +67,6 @@ class TaskRepository {
     return result.map((map) => Task.fromMap(map)).toList();
   }
 
-  // Read - Bugünün görevlerini getirme
   Future<List<Task>> getTodayTasks(int userId) async {
     final today = DateTime.now().toIso8601String().split('T')[0];
     final result = await db.query(
@@ -85,7 +78,6 @@ class TaskRepository {
     return result.map((map) => Task.fromMap(map)).toList();
   }
 
-  // Update
   Future<int> updateTask(Task task) async {
     return await db.update(
       'tasks',
@@ -95,7 +87,6 @@ class TaskRepository {
     );
   }
 
-  // Update - Görev durumunu güncelleme
   Future<int> toggleTaskCompletion(int id, bool isCompleted) async {
     return await db.update(
       'tasks',
@@ -105,7 +96,6 @@ class TaskRepository {
     );
   }
 
-  // Delete
   Future<int> deleteTask(int id) async {
     return await db.delete(
       'tasks',
@@ -114,7 +104,6 @@ class TaskRepository {
     );
   }
 
-  // Delete - Kullanıcının tüm görevlerini silme
   Future<int> deleteTasksByUserId(int userId) async {
     return await db.delete(
       'tasks',
@@ -123,7 +112,6 @@ class TaskRepository {
     );
   }
 
-  // Delete - Tamamlanmış görevleri silme
   Future<int> deleteCompletedTasks(int userId) async {
     return await db.delete(
       'tasks',

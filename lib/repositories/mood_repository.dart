@@ -5,18 +5,15 @@ import '../models/mood.dart';
 class MoodRepository {
   Database get db => AppDb.instance.db;
 
-  // Create
   Future<int> createMood(Mood mood) async {
     return await db.insert('moods', mood.toMap());
   }
 
-  // Read - Tüm mood kayıtlarını getirme
   Future<List<Mood>> getAllMoods() async {
     final result = await db.query('moods', orderBy: 'created_at DESC');
     return result.map((map) => Mood.fromMap(map)).toList();
   }
 
-  // Read - ID ile mood getirme
   Future<Mood?> getMoodById(int id) async {
     final result = await db.query(
       'moods',
@@ -29,7 +26,6 @@ class MoodRepository {
     return null;
   }
 
-  // Read - Kullanıcıya ait mood kayıtlarını getirme
   Future<List<Mood>> getMoodsByUserId(int userId) async {
     final result = await db.query(
       'moods',
@@ -40,7 +36,6 @@ class MoodRepository {
     return result.map((map) => Mood.fromMap(map)).toList();
   }
 
-  // Read - Kullanıcının bugünkü mood kaydını getirme
   Future<Mood?> getTodayMoodByUserId(int userId) async {
     final today = DateTime.now();
     final startOfDay =
@@ -61,7 +56,6 @@ class MoodRepository {
     return null;
   }
 
-  // Read - Tarih aralığına göre mood kayıtları
   Future<List<Mood>> getMoodsByDateRange(
       int userId, DateTime startDate, DateTime endDate) async {
     final result = await db.query(
@@ -77,7 +71,6 @@ class MoodRepository {
     return result.map((map) => Mood.fromMap(map)).toList();
   }
 
-  // Update
   Future<int> updateMood(Mood mood) async {
     return await db.update(
       'moods',
@@ -87,7 +80,6 @@ class MoodRepository {
     );
   }
 
-  // Delete
   Future<int> deleteMood(int id) async {
     return await db.delete(
       'moods',
@@ -96,7 +88,6 @@ class MoodRepository {
     );
   }
 
-  // Delete - Kullanıcının tüm mood kayıtlarını silme
   Future<int> deleteMoodsByUserId(int userId) async {
     return await db.delete(
       'moods',

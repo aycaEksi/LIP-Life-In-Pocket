@@ -18,22 +18,19 @@ class AvatarEditorScreen extends StatefulWidget {
 class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
   bool _isLoading = true;
 
-  // Seçili özellikler
   String selectedGender = 'male';
-  String selectedSkinTone = 'light'; // light veya dark
-  String selectedEye = 'male-eye'; // Göz default olarak seçili
-  Color selectedEyeColor = const Color(0xFF8B4513); // Kahverengi
+  String selectedSkinTone = 'light'; 
+  String selectedEye = 'male-eye'; 
+  Color selectedEyeColor = const Color(0xFF8B4513); 
   String? selectedHair;
-  Color selectedHairColor = const Color(0xFF3D2817); // Kahverengi saç
+  Color selectedHairColor = const Color(0xFF3D2817); 
   String? selectedBottomWear;
   Color selectedBottomColor = Colors.blue;
   String? selectedTopWear;
   Color selectedTopColor = Colors.red;
 
-  // Aktif tab
   String activeTab = 'gender';
 
-  // Avatar parçaları - cinsiyete göre filtrelenecek
   final Map<String, Map<String, List<String>>> avatarParts = {
     'male': {
       'eye': ['male-eye'],
@@ -63,7 +60,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
         final data = jsonDecode(response.body);
         if (data != null && mounted) {
           setState(() {
-            // Backend'den gelen verilerle avatar'ı güncelle
             
             // Cinsiyet
             if (data['gender'] != null) {
@@ -147,7 +143,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
         children: [
           Column(
             children: [
-              // Avatar Önizleme Alanı (Stack ile katmanlar)
               Expanded(
                 flex: 3,
                 child: Container(
@@ -158,7 +153,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                 ),
               ),
 
-              // Alt Menü (Cinsiyet, Ten, Göz, Alt, Üst)
               Expanded(
                 flex: 2,
                 child: Container(
@@ -174,7 +168,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Tab Bar
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: SingleChildScrollView(
@@ -198,7 +191,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                         ),
                       ),
                       const Divider(height: 1),
-                      // İçerik
                       Expanded(
                         child: _buildTabContent(),
                       ),
@@ -209,7 +201,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
             ],
           ),
 
-          // Theme Toggle Button - if available
           if (widget.themeManager != null)
             ThemeToggleButton(themeManager: widget.themeManager!),
         ],
@@ -217,7 +208,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
     );
   }
 
-  // Avatar Önizleme (Stack ile katmanlar - Bitmoji tarzı)
   Widget _buildAvatarPreview() {
     final bodyImage =
         'body-$selectedGender${selectedSkinTone == 'dark' ? '-dark' : ''}.png';
@@ -227,7 +217,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
       padding: const EdgeInsets.all(8),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Responsive boyutlandırma: mobilde 250px, tablet 350px, masaüstü 450px
           final screenWidth = MediaQuery.of(context).size.width;
           double maxSize;
 
@@ -249,7 +238,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  // 1. Beden (En alt katman)
                   Image.asset(
                     'assets/images/$bodyImage',
                     width: size,
@@ -266,7 +254,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                     },
                   ),
 
-                  // 2. Alt giysi (ColorFiltered ile renklendirilebilir)
                   if (selectedBottomWear != null)
                     ColorFiltered(
                       colorFilter: ColorFilter.mode(
@@ -281,7 +268,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                       ),
                     ),
 
-                  // 3. Üst giysi (ColorFiltered ile renklendirilebilir)
                   if (selectedTopWear != null)
                     ColorFiltered(
                       colorFilter: ColorFilter.mode(
@@ -296,7 +282,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                       ),
                     ),
 
-                  // 4. Göz (ColorFiltered ile renklendirilebilir)
                   ColorFiltered(
                     colorFilter: ColorFilter.mode(
                       selectedEyeColor,
@@ -310,7 +295,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                     ),
                   ),
 
-                  // 5. Saç (ColorFiltered ile renklendirilebilir)
                   if (selectedHair != null)
                     ColorFiltered(
                       colorFilter: ColorFilter.mode(
@@ -333,7 +317,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
     );
   }
 
-  // Renk Seçici Dialog'unu göster
   void _showColorPickerDialog(String category) {
     Color currentColor;
     String label;
@@ -418,7 +401,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
     );
   }
 
-  // Tab Buton
   Widget _buildTab(String label, String tabId, IconData icon) {
     final isActive = activeTab == tabId;
     return InkWell(
@@ -454,7 +436,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
     );
   }
 
-  // Tab İçeriği
   Widget _buildTabContent() {
     switch (activeTab) {
       case 'gender':
@@ -474,7 +455,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
     }
   }
 
-  // Ten Rengi Seçenekleri
   Widget _buildSkinToneOptions() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -536,7 +516,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
     );
   }
 
-  // Saç Seçenekleri (Numara butonları + Renk seçici)
   Widget _buildHairOptions() {
     final hairStyles = avatarParts[selectedGender]?['hair'] ?? [];
 
@@ -544,7 +523,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          // Renk seçici butonu
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -577,11 +555,9 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
           ),
           const SizedBox(height: 16),
 
-          // "Yok" seçeneği
           _buildHairNumberButton(null, 'Yok'),
           const SizedBox(height: 12),
 
-          // Saç modelleri (1, 2, 3, 4...)
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -635,24 +611,21 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
     );
   }
 
-  // Avatar Parçaları Seçenekleri (Göz, Alt, Üst)
   Widget _buildPartOptions(String category, String? selectedValue) {
     final parts = avatarParts[selectedGender]?[category] ?? [];
-    // Göz için 'Yok' seçeneği yok, diğerleri için var
     final showNoneOption = category != 'eye';
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Ekran genişliğine göre grid kolon sayısını ayarla
         final screenWidth = MediaQuery.of(context).size.width;
         int crossAxisCount;
 
         if (screenWidth < 600) {
           crossAxisCount = 3; // Mobil
         } else if (screenWidth < 900) {
-          crossAxisCount = 4; // Tablet
+          crossAxisCount = 4; 
         } else {
-          crossAxisCount = 5; // Masaüstü
+          crossAxisCount = 5; 
         }
 
         return GridView.builder(
@@ -766,7 +739,7 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                       ],
                     ),
                   ),
-                  // Sağ üst köşede renk seçme ikonu (sadece seçili item için)
+                  
                   if (isSelected)
                     Positioned(
                       top: 4,
@@ -817,7 +790,6 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
         .join(' ');
   }
 
-  // Cinsiyet Seçenekleri
   Widget _buildGenderOptions() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),

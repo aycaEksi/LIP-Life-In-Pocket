@@ -63,13 +63,10 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         
-        // Token'ı kaydet
         await ApiService.instance.saveToken(data['token']);
         
-        // User bilgisini kaydet
         await ApiService.instance.saveUser(data['user']);
         
-        // Login durumunu kaydet
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
 
@@ -81,7 +78,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
 
-          // Ana ekrana yönlendir
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -138,7 +134,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       const SizedBox(height: 24),
 
-              // Title
               Text(
                 'Tekrar Hoş Geldiniz',
                 style: theme.textTheme.headlineLarge?.copyWith(
@@ -149,7 +144,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 8),
 
-              // Subtitle
               Text(
                 'Günlüğünüze devam etmek için giriş yapın',
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -159,7 +153,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 48),
 
-              // Email TextField
               TextField(
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
@@ -192,7 +185,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
-              // Password TextField
               TextField(
                 controller: passwordController,
                 obscureText: obscurePassword,
@@ -238,12 +230,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 8),
 
-              // Forgot Password
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
-                    // Forgot password logic
+                    
                   },
                   child: Text(
                     'Şifremi Unuttum?',
@@ -257,7 +248,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              // Sign In Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -294,7 +284,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              // Divider with text
               Row(
                 children: [
                   Expanded(
@@ -321,7 +310,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 24),
 
-              // Create Account Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -362,7 +350,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           
-          // Theme Toggle Button
           ThemeToggleButton(themeManager: widget.themeManager),
         ],
       ),

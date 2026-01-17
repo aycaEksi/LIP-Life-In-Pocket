@@ -1,7 +1,7 @@
 class PersonalReminder {
   final int id;
   final int userId;
-  final String date; // yyyy-mm-dd
+  final String date;
   final String text;
   final bool done;
 
@@ -12,6 +12,9 @@ class PersonalReminder {
     required this.text,
     required this.done,
   });
+
+// kullanıcı kendi hatırlatıcısını da ekleyebilsin diye ama garip çalışıyor dkbcofeje -hayat
+// shsjjsd düzelttim sanırım -ayca
 
   factory PersonalReminder.fromRow(Map<String, Object?> r) {
     return PersonalReminder(

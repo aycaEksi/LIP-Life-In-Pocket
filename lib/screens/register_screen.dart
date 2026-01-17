@@ -90,7 +90,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       }
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        // Başarılı kayıt
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -99,7 +99,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           );
 
-          // Email verification ekranına yönlendir
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -111,7 +110,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           );
         }
       } else {
-        // Hata durumu
+        
         try {
           final errorData = jsonDecode(response.body);
           final errorMessage = errorData['error'] ?? errorData['message'] ?? 'Kayıt başarısız oldu';
@@ -177,7 +176,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 8),
 
-                      // Subtitle
                       Text(
                         'Hesabınızı oluşturun ve yolculuğunuza başlayın',
                         style: theme.textTheme.bodyLarge?.copyWith(
@@ -187,7 +185,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 48),
 
-                      // Name TextField
                       TextField(
                         controller: nameController,
                         keyboardType: TextInputType.name,
@@ -220,7 +217,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Email TextField
                       TextField(
                         controller: emailController,
                         keyboardType: TextInputType.emailAddress,
@@ -253,7 +249,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Password TextField
                       TextField(
                         controller: passwordController,
                         obscureText: obscurePassword,
@@ -299,7 +294,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Confirm Password TextField
                       TextField(
                         controller: confirmPasswordController,
                         obscureText: obscureConfirmPassword,
@@ -346,7 +340,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 32),
 
-                      // Register Button
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -379,7 +372,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Already have account
                       Center(
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -421,7 +413,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
 
-          // Theme Toggle Button
           ThemeToggleButton(themeManager: widget.themeManager),
         ],
       ),

@@ -16,15 +16,13 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  late DateTime _viewMonth; // first day of month
+  late DateTime _viewMonth; 
   DateTime _selected = DateTime.now();
 
-  // Day entry state
   String _note = '';
   String? _photo1;
   String? _photo2;
 
-  // dots for month
   final Set<int> _daysWithData = {};
 
   final CalendarRepository _repo = CalendarRepos.calendar;
@@ -79,9 +77,9 @@ class _CalendarPageState extends State<CalendarPage> {
 
     await _loadMonthDots();
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Kaydedildi')));
+    
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.showSnackBar(const SnackBar(content: Text('Kaydedildi')));
   }
 
   Future<void> _deleteTodayEntry() async {
@@ -116,7 +114,6 @@ class _CalendarPageState extends State<CalendarPage> {
   Future<void> _pickPhoto(int slot) async {
     if (!_isToday) return;
 
-    // ✅ Desktop: use file picker
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.image,
@@ -128,31 +125,26 @@ class _CalendarPageState extends State<CalendarPage> {
       final path = result.files.single.path;
       if (path == null) return;
 
-      // Local kopyayı oluştur
       final stored = await _copyLocalFileToAppDir(path);
 
-      // Backend'e upload et ve URL'i al
-      final photoUrl = await _repo.uploadPhoto(stored);
-      
-      if (photoUrl == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Fotoğraf yüklenemedi')),
-          );
-        }
-        return;
-      }
-
+      if (!mounted) return;
       setState(() {
-        if (slot == 1) _photo1 = photoUrl;
-        if (slot == 2) _photo2 = photoUrl;
+        if (slot == 1) _photo1 = stored;
+        if (slot == 2) _photo2 = stored;
       });
 
-      await _saveToday();
+      await _repo.upsertEntry(
+        date: _selected,
+        note: _note,
+        photo1Path: _photo1,
+        photo2Path: _photo2,
+      );
+      
+      if (!mounted) return;
+      await _loadMonthDots();
       return;
     }
 
-    // ✅ Mobile: use image_picker
     final picker = ImagePicker();
     final x = await picker.pickImage(
       source: ImageSource.gallery,
@@ -160,27 +152,23 @@ class _CalendarPageState extends State<CalendarPage> {
     );
     if (x == null) return;
 
-    // Local kopyayı oluştur
     final stored = await _copyToAppDir(x);
 
-    // Backend'e upload et ve URL'i al
-    final photoUrl = await _repo.uploadPhoto(stored);
-    
-    if (photoUrl == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Fotoğraf yüklenemedi')),
-        );
-      }
-      return;
-    }
-
+    if (!mounted) return;
     setState(() {
-      if (slot == 1) _photo1 = photoUrl;
-      if (slot == 2) _photo2 = photoUrl;
+      if (slot == 1) _photo1 = stored;
+      if (slot == 2) _photo2 = stored;
     });
 
-    await _saveToday();
+    await _repo.upsertEntry(
+      date: _selected,
+      note: _note,
+      photo1Path: _photo1,
+      photo2Path: _photo2,
+    );
+    
+    if (!mounted) return;
+    await _loadMonthDots();
   }
 
   Future<void> _removePhoto(int slot) async {
@@ -221,13 +209,16 @@ class _CalendarPageState extends State<CalendarPage> {
       ),
     );
 
-    if (ok != true) return;
+    if (ok != true) {
+      ctrl.dispose();
+      return;
+    }
 
     setState(() => _note = ctrl.text);
+    ctrl.dispose();
     await _saveToday();
   }
 
-  // -------- UI look (colors close to screenshots) --------
   static const _bgTop = Color(0xFFF5EEFF);
   static const _bgBottom = Color(0xFFF0E6FF);
 
@@ -838,7 +829,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 onPressed: _editEntryDialog,
                 icon: const Icon(Icons.edit, color: _dot),
                 label: const Text(
-                  "Edit Entry",
+                  "Notu Düzenle",
                   style: TextStyle(color: _dot, fontWeight: FontWeight.w900),
                 ),
               ),
@@ -847,7 +838,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 onPressed: _deleteTodayEntry,
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                 label: const Text(
-                  "Delete",
+                  "Sil",
                   style: TextStyle(
                     color: Colors.redAccent,
                     fontWeight: FontWeight.w900,
@@ -860,7 +851,6 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  // ---------- helpers UI ----------
   Widget _glassCard({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
@@ -929,18 +919,18 @@ class _CalendarPageState extends State<CalendarPage> {
 
   String _monthName(int m) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık',
     ];
     return months[m - 1];
   }
@@ -948,19 +938,19 @@ class _CalendarPageState extends State<CalendarPage> {
   String _weekdayName(int w) {
     switch (w) {
       case 1:
-        return 'Monday';
+        return 'Pazartesi';
       case 2:
-        return 'Tuesday';
+        return 'Salı';
       case 3:
-        return 'Wednesday';
+        return 'Çarşamba';
       case 4:
-        return 'Thursday';
+        return 'Perşembe';
       case 5:
-        return 'Friday';
+        return 'Cuma';
       case 6:
-        return 'Saturday';
+        return 'Cumartesi';
       case 7:
-        return 'Sunday';
+        return 'Pazar';
       default:
         return '';
     }

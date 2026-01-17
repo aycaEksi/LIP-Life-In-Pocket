@@ -40,7 +40,6 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadMoodStatus();
     print('🚀 HomeScreen initState tamamlandı');
 
-    // update time on screen (every 10s)
     _clockTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (mounted) setState(() {});
     });
@@ -83,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
           print('🎭 Avatar parsed: $_avatarData');
         }
       } else {
-        // API'den veri gelmezse default avatar
         print('⚠️ Avatar API hatası, default avatar ayarlanıyor');
         if (mounted) {
           setState(() {
@@ -104,7 +102,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       print('❌ Avatar yükleme hatası: $e');
-      // Hata durumunda default avatar göster
       if (mounted) {
         setState(() {
           _avatarData = {
@@ -128,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
     print('🔍 _loadMoodStatus fonksiyonu BAŞLADI');
     try {
       print('🔍 Mood durumu yükleniyor...');
-      // Backend'den hazır durum bilgisini al
       print('📞 API çağrısı yapılıyor: getLatestDurum()');
       final response = await ApiService.instance.getLatestDurum();
       
@@ -211,20 +207,17 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // BACKGROUND (light/dark with gradient + blobs)
           Positioned.fill(child: _background(isDark: isDark)),
 
           SafeArea(
             child: Stack(
               children: [
-                // TOP LEFT
                 Positioned(
                   top: 22,
                   left: 22,
                   child: _topLeftHeader(isDark: isDark),
                 ),
 
-                // TOP RIGHT (DAY + TIME)
                 Positioned(
                   top: 22,
                   right: 22,
@@ -257,7 +250,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // CENTER (avatar + 4 buttons)
                 Center(
                   child: LayoutBuilder(
                     builder: (context, c) {
@@ -270,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       final avatarSize = containerSize * 0.44;
                       final ringSize = avatarSize * 1.22;
 
-                      final btnSize = containerSize * 0.16; // rounded-square
+                      final btnSize = containerSize * 0.16; 
                       final gap = containerSize * 0.34;
 
                       return SizedBox(
@@ -279,7 +271,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
-                            // soft ring behind avatar
                             Container(
                               width: ringSize,
                               height: ringSize,
@@ -305,7 +296,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
 
-                            // AVATAR CIRCLE
                             Container(
                               width: avatarSize,
                               height: avatarSize,
@@ -344,7 +334,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
 
-                            // 4 BUTTONS around
                             Positioned(
                               top: (containerSize / 2) - gap - (btnSize / 2),
                               child: _glassSquareButton(
@@ -361,7 +350,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     ),
                                   ).then((_) {
-                                    // Profile screen'den döndüğünde avatar'ı yeniden yükle
                                     _loadAvatar();
                                   });
                                 },
@@ -425,7 +413,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // THEME TOGGLE (bottom-right)
                 ThemeToggleButton(themeManager: widget.themeManager),
               ],
             ),

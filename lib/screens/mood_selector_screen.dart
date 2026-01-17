@@ -25,7 +25,6 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
   String? _aiMotivationMessage;
   bool _isLoadingAI = false;
 
-  // Theme constants (close to reference design)
   static const _bgTopLight = Color(0xFFF6EEFF);
   static const _bgBottomLight = Color(0xFFF2ECFF);
   static const _bgTopDark = Color(0xFF140824);
@@ -171,7 +170,6 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
                   ),
           ),
 
-          // Theme Toggle Button
           if (widget.themeManager != null)
             ThemeToggleButton(themeManager: widget.themeManager!),
         ],
@@ -471,7 +469,6 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
 
   Future<void> _saveMood() async {
     try {
-      // API'ye mood kaydet
       final response = await ApiService.instance.saveMood(
         energy: energy.toInt(),
         happiness: happiness.toInt(),
@@ -490,7 +487,6 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
           );
         }
 
-        // AI motivasyon mesajı al
         if (mounted) {
           setState(() {
             _isLoadingAI = true;
@@ -507,7 +503,6 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
           });
         }
 
-        // Bildirim gönder ve 2 saatlik döngüyü başlat
         await NotificationService.instance.sendMoodInsightNotification(
           energy: energy.toInt(),
           happiness: happiness.toInt(),

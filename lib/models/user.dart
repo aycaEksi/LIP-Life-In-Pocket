@@ -19,6 +19,8 @@ class User {
       'created_at': createdAt ?? DateTime.now().toIso8601String(),
     };
   }
+// log ine basınca direkt giriyor şimdilik verification yapmadım daha
+// tmm düzelttim -ayca
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(

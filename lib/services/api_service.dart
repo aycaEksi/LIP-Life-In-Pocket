@@ -5,11 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ApiService {
   static const String baseUrl = 'http://localhost:3000/api';
   
-  // Singleton pattern
   ApiService._();
   static final ApiService instance = ApiService._();
 
-  // Token yönetimi
   Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
@@ -25,7 +23,6 @@ class ApiService {
     await prefs.remove('auth_token');
   }
 
-  // User bilgisi kaydetme
   Future<void> saveUser(Map<String, dynamic> user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user', jsonEncode(user));
@@ -45,7 +42,6 @@ class ApiService {
     await prefs.remove('user');
   }
 
-  // Header'ları hazırla
   Future<Map<String, String>> _getHeaders({bool includeAuth = false}) async {
     final headers = {'Content-Type': 'application/json'};
     
@@ -59,7 +55,6 @@ class ApiService {
     return headers;
   }
 
-  // Register
   Future<http.Response> register({
     required String name,
     required String email,
@@ -76,7 +71,6 @@ class ApiService {
     );
   }
 
-  // Verify code
   Future<http.Response> verifyCode({
     required String email,
     required String code,
@@ -86,7 +80,6 @@ class ApiService {
       'code': code,
     };
     
-    // Debug için log
     print('Verify Code Request:');
     print('URL: $baseUrl/verify-code');
     print('Body: ${jsonEncode(body)}');
@@ -103,7 +96,6 @@ class ApiService {
     return response;
   }
 
-  // Login
   Future<http.Response> login({
     required String email,
     required String password,
@@ -118,7 +110,6 @@ class ApiService {
     );
   }
 
-  // Get profile
   Future<http.Response> getProfile() async {
     return await http.get(
       Uri.parse('$baseUrl/profile'),
@@ -126,7 +117,6 @@ class ApiService {
     );
   }
 
-  // Resend verification code
   Future<http.Response> resendVerificationCode(String email) async {
     return await http.post(
       Uri.parse('$baseUrl/resend-verification'),
@@ -135,7 +125,6 @@ class ApiService {
     );
   }
 
-  // Motivation endpoint (token gerektirmiyor)
   Future<http.Response> getMotivation({
     required int energy,
     required int happiness,
@@ -154,7 +143,6 @@ class ApiService {
     );
   }
 
-  // Generic authenticated request helper
   Future<http.Response> authenticatedRequest({
     required String method,
     required String endpoint,
@@ -185,7 +173,6 @@ class ApiService {
     }
   }
 
-  // Logout
   Future<void> logout() async {
     await removeToken();
     await removeUser();
@@ -193,7 +180,6 @@ class ApiService {
     await prefs.setBool('isLoggedIn', false);
   }
 
-  // Check if token is valid
   Future<bool> isAuthenticated() async {
     try {
       final response = await getProfile();
@@ -203,9 +189,6 @@ class ApiService {
     }
   }
 
-  // ==================== DAY ENTRIES ====================
-  
-  // Resim upload
   Future<String?> uploadPhoto(String filePath) async {
     try {
       final token = await getToken();
@@ -267,7 +250,6 @@ class ApiService {
     );
   }
 
-  // ==================== TASKS ====================
   
   Future<http.Response> createTask({
     required String period,
@@ -321,7 +303,6 @@ class ApiService {
     );
   }
 
-  // ==================== CAPSULES ====================
   
   Future<http.Response> createCapsule({
     required String title,
@@ -353,7 +334,6 @@ class ApiService {
     );
   }
 
-  // ==================== MOODS ====================
   
   Future<http.Response> saveMood({
     required int energy,
@@ -398,7 +378,6 @@ class ApiService {
     );
   }
 
-  /// AI'dan mood insight al (bildirimler için)
   Future<http.Response> getMoodInsight({
     required int energy,
     required int happiness,
@@ -417,7 +396,6 @@ class ApiService {
     );
   }
 
-  // ==================== AVATAR ====================
   
   Future<http.Response> updateAvatar({
     String? gender,
@@ -455,7 +433,6 @@ class ApiService {
     );
   }
 
-  // ==================== AVATAR PREFERENCES ====================
   
   Future<http.Response> updateAvatarPrefs({
     int? hair,
@@ -481,7 +458,6 @@ class ApiService {
     );
   }
 
-  // ==================== FOCUS DAILY ====================
   
   Future<http.Response> saveFocusDaily({
     required String date,
@@ -505,8 +481,6 @@ class ApiService {
       endpoint: 'focus-daily/$date',
     );
   }
-
-  // ==================== PERSONAL REMINDERS ====================
   
   Future<http.Response> createPersonalReminder({
     required String date,

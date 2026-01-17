@@ -8,7 +8,7 @@ import 'focus_repository.dart';
 class ApiFocusRepository implements FocusRepository {
   @override
   Future<void> ensureTodaySeeded() async {
-    // API'de otomatik oluşturulacak, burada bir şey yapmaya gerek yok
+    
   }
 
   @override
@@ -24,7 +24,7 @@ class ApiFocusRepository implements FocusRepository {
         }
       }
       
-      // Veri yoksa boş döndür
+      
       return FocusDay.empty(userId: 1, date: today);
     } catch (e) {
       print('getToday error: $e');

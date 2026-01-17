@@ -38,9 +38,8 @@ class _TodosPageState extends State<TodosPage> {
     }
   }
 
-  String _periodDb(Period p) => p.name; // daily/weekly/...
+  String _periodDb(Period p) => p.name; 
 
-  // ---------------- REPO (no DB here) ----------------
 
   Future<List<TaskItem>> _loadTasks() async {
     return Repos.todos.getTasks(_periodDb(_period));
@@ -149,7 +148,6 @@ class _TodosPageState extends State<TodosPage> {
     if (mounted) setState(() {});
   }
 
-  // ---------------- Date/Time helpers (same) ----------------
 
   Future<DateTime?> _pickDueDateTime({DateTime? initial}) async {
     final now = DateTime.now();
@@ -168,7 +166,6 @@ class _TodosPageState extends State<TodosPage> {
       initialTime: TimeOfDay.fromDateTime(init),
     );
     if (t == null) {
-      // if user cancels time, default to 12:00
       return DateTime(d.year, d.month, d.day, 12, 0);
     }
     return DateTime(d.year, d.month, d.day, t.hour, t.minute);
@@ -183,7 +180,6 @@ class _TodosPageState extends State<TodosPage> {
   }
 
   String _chipText(DateTime due) {
-    // mimic photo style like "2:00 PM" or "Tomorrow"
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final d0 = DateTime(due.year, due.month, due.day);
@@ -200,7 +196,6 @@ class _TodosPageState extends State<TodosPage> {
     return "$dd/$mm";
   }
 
-  // --- UI colors to match your screenshots as close as possible ---
   static const _bgLavenderTop = Color(0xFFF3ECFF);
   static const _bgLavenderBottom = Color(0xFFE9DBFF);
 
@@ -449,7 +444,7 @@ class _TodosPageState extends State<TodosPage> {
               children: [
                 Expanded(
                   child: Text(
-                    "Today's Focus",
+                    "Günün Görevleri",
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -629,7 +624,7 @@ class _TodosPageState extends State<TodosPage> {
             child: TextField(
               controller: _newTaskCtrl,
               decoration: InputDecoration(
-                hintText: "Add a new task...",
+                hintText: "Yeni görev ekle...",
                 hintStyle: TextStyle(color: Colors.deepPurple.shade200),
                 border: InputBorder.none,
               ),
@@ -681,7 +676,7 @@ class _TodosPageState extends State<TodosPage> {
                   Icon(Icons.add, color: Colors.white),
                   SizedBox(width: 6),
                   Text(
-                    "Add",
+                    "Ekle",
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -697,9 +692,6 @@ class _TodosPageState extends State<TodosPage> {
   }
 }
 
-/* =========================================================
-   TIME CAPSULE PAGE (Rocket icon opens this)
-   ========================================================= */
 
 class TimeCapsulePage extends StatefulWidget {
   const TimeCapsulePage({super.key});
@@ -843,7 +835,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                "Your Locked Capsules",
+                                "Kilitli Zaman Kapsüllerin",
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
@@ -862,7 +854,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
                               if (rows.isEmpty) {
                                 return Center(
                                   child: Text(
-                                    "No capsules yet.",
+                                    "Henüz bir zaman kapsülün yok.",
                                     style: TextStyle(
                                       color: Colors.blue.shade300,
                                     ),
@@ -870,7 +862,6 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
                                 );
                               }
 
-                              // responsive 2 columns on desktop, 1 on mobile
                               final cols = isMobile ? 1 : 2;
                               return GridView.builder(
                                 itemCount: rows.length,
@@ -925,7 +916,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                "Time Capsule",
+                "Zaman Kapsülü",
                 style: TextStyle(
                   fontSize: 42,
                   fontWeight: FontWeight.w700,
@@ -935,7 +926,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
               ),
               const SizedBox(height: 3),
               Text(
-                "✧ Messages to your future self",
+                "✧ Gelecekteki kendine mesajlar",
                 style: TextStyle(
                   color: Colors.blue.shade300,
                   fontWeight: FontWeight.w600,
@@ -993,7 +984,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
               Icon(Icons.rocket_launch_rounded, color: Colors.blue.shade700),
               const SizedBox(width: 10),
               Text(
-                "Create New Capsule",
+                "Yeni Zaman Kapsülü Oluştur",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -1022,7 +1013,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
                     controller: _noteCtrl,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      hintText: "Write a message to your future self...",
+                      hintText: "Gelecekteki kendine bir mesaj yaz...",
                       hintStyle: TextStyle(color: Colors.blue.shade200),
                       border: InputBorder.none,
                     ),
@@ -1099,7 +1090,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
                             Icon(Icons.add, color: Colors.white),
                             SizedBox(width: 8),
                             Text(
-                              "Add Capsule",
+                              "Kapsül Oluştur",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w800,
@@ -1128,7 +1119,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
     final monthName = _monthName(unlockLocal.month).toUpperCase();
     final label = unlocked
         ? "UNLOCKED"
-        : "LOCKED UNTIL $monthName ${unlockLocal.day}, ${unlockLocal.year}";
+        : "ŞU ZAMANA KADAR KİLİTLİ: $monthName ${unlockLocal.day}, ${unlockLocal.year}";
 
     return InkWell(
       borderRadius: BorderRadius.circular(22),
@@ -1250,7 +1241,6 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
 
     if (unlocked) return base;
 
-    // blur effect like screenshot
     return ClipRect(
       child: ImageFiltered(
         imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),

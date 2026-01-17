@@ -14,10 +14,8 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Türkçe locale'i başlat
   await initializeDateFormatting('tr_TR', null);
 
-  // Windows, Linux, macOS için sqflite_ffi başlatma
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
@@ -27,14 +25,11 @@ void main() async {
   await AppDb.instance.init();
   await AuthService.instance.ensureTestUserOnFirstLaunch();
 
-  // Bildirim servisini başlat (sadece mobil platformlarda)
   if (Platform.isAndroid || Platform.isIOS) {
     await NotificationService.instance.init();
     
-    // 2 saatte bir mood insight bildirimleri başlat
     await NotificationService.instance.scheduleMoodInsights();
     
-    // Su içme hatırlatıcıları başlat (09:00, 12:00, 15:00, 18:00, 21:00)
     await NotificationService.instance.scheduleWaterReminders();
   }
 
@@ -71,7 +66,6 @@ class _MyAppState extends State<MyApp> {
       title: 'LiP - Life in Pocket',
       debugShowCheckedModeBanner: false,
 
-      // Tema yapılandırması - ThemeManager ile yönetiliyor
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: _themeManager.themeMode,
@@ -101,11 +95,9 @@ class _AuthCheckerState extends State<AuthChecker> {
   }
 
   Future<void> _checkLoginStatus() async {
-    // Token varsa profil endpoint'ine istek at
     final token = await ApiService.instance.getToken();
     
     if (token != null) {
-      // Token varsa profil bilgilerini kontrol et
       try {
         final isAuthenticated = await ApiService.instance.isAuthenticated();
         setState(() {
@@ -113,7 +105,6 @@ class _AuthCheckerState extends State<AuthChecker> {
           _isLoading = false;
         });
       } catch (e) {
-        // Token geçersiz, logout yap
         await ApiService.instance.logout();
         setState(() {
           _isLoggedIn = false;

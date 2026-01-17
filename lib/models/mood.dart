@@ -6,6 +6,8 @@ class Mood {
   final int stress;
   final String? createdAt;
 
+// 3 farklı kategori ekledim şimdilik sonra da ai'dan metin alacak user -ayca
+
   Mood({
     this.id,
     required this.userId,

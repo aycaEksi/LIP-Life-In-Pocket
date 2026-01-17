@@ -68,7 +68,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       }
 
       if (response.statusCode == 200) {
-        // Başarılı doğrulama
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -77,7 +76,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
             ),
           );
 
-          // Login ekranına yönlendir
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
@@ -197,7 +195,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
                       const SizedBox(height: 8),
 
-                      // Subtitle
                       Text(
                         'Email adresinize gönderilen 6 haneli kodu girin',
                         style: theme.textTheme.bodyLarge?.copyWith(
@@ -207,7 +204,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Email display
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -237,7 +233,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
                       const SizedBox(height: 48),
 
-                      // Verification Code TextField
                       TextField(
                         controller: codeController,
                         keyboardType: TextInputType.number,
@@ -281,7 +276,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
                       const SizedBox(height: 32),
 
-                      // Verify Button
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -314,7 +308,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Resend Code
                       Center(
                         child: TextButton(
                           onPressed: (_isLoading || _isResending)
@@ -363,7 +356,6 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
             ),
           ),
 
-          // Theme Toggle Button
           ThemeToggleButton(themeManager: widget.themeManager),
         ],
       ),

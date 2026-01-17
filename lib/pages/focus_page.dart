@@ -20,35 +20,37 @@ class FocusPage extends StatefulWidget {
 class _FocusPageState extends State<FocusPage> {
   final FocusRepository _repo = ApiFocusRepository();
 
-  // Timer
   Timer? _ticker;
   Duration _remaining = const Duration(minutes: 25);
   Duration _selectedPreset = const Duration(minutes: 25);
   bool _running = false;
 
-  // Data (daily)
   late Future<FocusDay> _dayF;
   late Future<List<PersonalReminder>> _personalF;
+
+  int _localHydrationCount = 0;
+  int _localMovementCount = 0;
 
   final TextEditingController _personalCtrl = TextEditingController();
 
   void _refresh() {
     _dayF = _repo.getToday();
     _personalF = _repo.listTodayReminders();
+    
+    _dayF.then((day) {
+      if (mounted) {
+        setState(() {
+          _localHydrationCount = day.hydrationCount;
+          _localMovementCount = day.movementCount;
+        });
+      }
+    });
   }
 
   @override
   void initState() {
     super.initState();
     _refresh();
-
-    // App açılınca: günlük reset kontrolü repository içinde olmalı (today row ensure + reset if day changed)
-    // Notif schedule: app açılınca bir kez re-schedule.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await NotificationService.instance.init();
-      await NotificationService.instance.reschedule5HourChecks(repo: _repo);
-      if (mounted) setState(_refresh);
-    });
   }
 
   @override
@@ -58,7 +60,6 @@ class _FocusPageState extends State<FocusPage> {
     super.dispose();
   }
 
-  // ---------------- Timer logic ----------------
 
   void _setPreset(Duration d) {
     if (_running) return;
@@ -98,55 +99,38 @@ class _FocusPageState extends State<FocusPage> {
     });
   }
 
-  // ---------------- Reminders logic ----------------
 
   Future<void> _tapHydration() async {
+    if (_localHydrationCount >= 10) {
+      return; 
+    }
+    
+    setState(() {
+      _localHydrationCount++;
+    });
+    
     try {
-      final day = await _repo.getToday();
-      if (day.hydrationCount >= 10) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Su içme hedefi tamamlandı!")),
-          );
-        }
-        return;
-      }
-      await _repo.setHydrationCount(day.hydrationCount + 1);
-
-      if (!mounted) return;
-      setState(_refresh);
-      await NotificationService.instance.reschedule5HourChecks(repo: _repo);
+      await _repo.setHydrationCount(_localHydrationCount);
+      print('✅ Hydration kaydedildi: $_localHydrationCount');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error: $e")));
-      }
+      print('⚠️ Hydration backend hatası: $e');
     }
   }
 
   Future<void> _tapMovement() async {
+    if (_localMovementCount >= 2) {
+      return; 
+    }
+    
+    setState(() {
+      _localMovementCount++;
+    });
+    
     try {
-      final day = await _repo.getToday();
-      if (day.movementCount >= 2) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Hareket hedefi tamamlandı!")),
-          );
-        }
-        return;
-      }
-      await _repo.setMovementCount(day.movementCount + 1);
-
-      if (!mounted) return;
-      setState(_refresh);
-      await NotificationService.instance.reschedule5HourChecks(repo: _repo);
+      await _repo.setMovementCount(_localMovementCount);
+      print('✅ Movement kaydedildi: $_localMovementCount');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Error: $e")));
-      }
+      print('⚠️ Movement backend hatası: $e');
     }
   }
 
@@ -159,7 +143,6 @@ class _FocusPageState extends State<FocusPage> {
 
     if (!mounted) return;
     setState(_refresh);
-    await NotificationService.instance.reschedule5HourChecks(repo: _repo);
   }
 
   Future<void> _togglePersonal(PersonalReminder r) async {
@@ -167,7 +150,6 @@ class _FocusPageState extends State<FocusPage> {
 
     if (!mounted) return;
     setState(_refresh);
-    await NotificationService.instance.reschedule5HourChecks(repo: _repo);
   }
 
   Future<void> _deletePersonal(PersonalReminder r) async {
@@ -175,10 +157,8 @@ class _FocusPageState extends State<FocusPage> {
 
     if (!mounted) return;
     setState(_refresh);
-    await NotificationService.instance.reschedule5HourChecks(repo: _repo);
   }
 
-  // ---------------- UI constants (match screenshot vibe) ----------------
 
   static const _bgTop = Color(0xFFF5EEFF);
   static const _bgBottom = Color(0xFFF0E6FF);
@@ -272,7 +252,7 @@ class _FocusPageState extends State<FocusPage> {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  "Back to Diary",
+                  "Anasayfaya Dön",
                   style: TextStyle(
                     color: Colors.deepPurple.shade300,
                     fontWeight: FontWeight.w700,
@@ -284,7 +264,7 @@ class _FocusPageState extends State<FocusPage> {
         ),
         const Spacer(),
         Text(
-          "Focus Hub",
+          "Odaklanma Zamanı",
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w900,
@@ -487,7 +467,7 @@ class _FocusPageState extends State<FocusPage> {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      "Hydration",
+                      "İçilen Su Miktarı",
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Colors.deepPurple.shade500,
@@ -500,7 +480,7 @@ class _FocusPageState extends State<FocusPage> {
                   spacing: 8,
                   runSpacing: 8,
                   children: List.generate(10, (i) {
-                    final filled = day != null && i < day.hydrationCount;
+                    final filled = i < _localHydrationCount;
                     return InkWell(
                       onTap: _tapHydration,
                       borderRadius: BorderRadius.circular(999),
@@ -549,7 +529,7 @@ class _FocusPageState extends State<FocusPage> {
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      "Movement",
+                      "Hareket",
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Colors.deepPurple.shade500,
@@ -560,7 +540,7 @@ class _FocusPageState extends State<FocusPage> {
                 const SizedBox(height: 12),
                 Row(
                   children: List.generate(2, (i) {
-                    final filled = day != null && i < day.movementCount;
+                    final filled = i < _localMovementCount;
                     return Padding(
                       padding: const EdgeInsets.only(right: 10),
                       child: InkWell(
@@ -623,7 +603,7 @@ class _FocusPageState extends State<FocusPage> {
                       child: TextField(
                         controller: _personalCtrl,
                         decoration: InputDecoration(
-                          hintText: "What else to remember?",
+                          hintText: "Hatırlaman Gereken Neler Var?",
                           hintStyle: TextStyle(
                             color: Colors.deepPurple.shade200,
                             fontWeight: FontWeight.w600,
@@ -670,7 +650,7 @@ class _FocusPageState extends State<FocusPage> {
                   if (items.isEmpty) {
                     return Center(
                       child: Text(
-                        "No personal reminders yet",
+                        "Henüz bir hatırlatıcı eklemedin.",
                         style: TextStyle(
                           color: Colors.deepPurple.shade200,
                           fontWeight: FontWeight.w700,
@@ -742,7 +722,6 @@ class _FocusPageState extends State<FocusPage> {
     );
   }
 
-  // ---------------- Small widgets ----------------
 
   Widget _glassCard({required Widget child}) {
     return ClipRRect(
