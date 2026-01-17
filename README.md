@@ -82,11 +82,44 @@
 
 ## 📱 Screenshots
 
-```
-[Calendar Page]   [Focus Hub]   [Task Manager]   [Mood Tracker]   [Avatar Editor]
-```
+<div align="center">
 
-*Note: Add actual screenshots in `assets/screenshots/` folder*
+### 🏠 Home Screen
+<img src="assets/ss/home-screen.PNG" width="250" alt="Home Screen"/>
+
+*Beautiful gradient interface with easy navigation*
+
+### 🔐 Login & Authentication
+<img src="assets/ss/login-screen.PNG" width="250" alt="Login Screen"/>
+
+*Secure email-based authentication*
+
+### 📅 Calendar & Memory Journal
+<img src="assets/ss/calender-screen.PNG" width="250" alt="Calendar Page"/>
+
+*Track your daily memories with notes and photos*
+
+### ✅ Task Management
+<img src="assets/ss/todo-screen.PNG" width="250" alt="Task Manager"/>
+
+*Organize daily, weekly, monthly, and yearly tasks*
+
+### 😊 Mood Tracking
+<img src="assets/ss/mood-screen.PNG" width="250" alt="Mood Tracker"/>
+
+*Monitor your emotional wellness with energy, happiness, and stress levels*
+
+### 🎮 Avatar Customization
+<img src="assets/ss/avatar-screen.PNG" width="250" alt="Avatar Editor"/>
+
+*Personalize your digital character with custom styles and colors*
+
+### ⏰ Time Capsule
+<img src="assets/ss/kapsul-screen.PNG" width="250" alt="Time Capsule"/>
+
+*Save messages for your future self*
+
+</div>
 
 ---
 
