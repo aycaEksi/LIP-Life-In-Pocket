@@ -1,0 +1,45 @@
+name: try_lip_app
+description: LiP - daily planner and avatar mood app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  table_calendar: ^3.1.2
+  shared_preferences: ^2.3.2
+  sqflite: ^2.3.3
+  sqflite_common_ffi: ^2.3.4
+  path: ^1.9.0
+  path_provider: ^2.1.4
+  flutter_colorpicker: ^1.1.0
+  http: ^1.2.0
+  flutter_spinkit: ^5.2.0
+  intl: ^0.19.0
+  file_picker: ^8.1.2
+  crypto: ^3.0.5
+  image_picker: ^1.1.2
+ 
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
+    - assets/tr_words.txt
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/lip-logo.png"  
