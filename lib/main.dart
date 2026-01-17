@@ -9,6 +9,7 @@ import 'theme/theme_manager.dart';
 import 'db/app_db.dart';
 import 'services/auth_service.dart';
 import 'services/api_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +26,17 @@ void main() async {
   // Veritabanı ve auth servisini başlat
   await AppDb.instance.init();
   await AuthService.instance.ensureTestUserOnFirstLaunch();
+
+  // Bildirim servisini başlat (sadece mobil platformlarda)
+  if (Platform.isAndroid || Platform.isIOS) {
+    await NotificationService.instance.init();
+    
+    // 2 saatte bir mood insight bildirimleri başlat
+    await NotificationService.instance.scheduleMoodInsights();
+    
+    // Su içme hatırlatıcıları başlat (09:00, 12:00, 15:00, 18:00, 21:00)
+    await NotificationService.instance.scheduleWaterReminders();
+  }
 
   runApp(const MyApp());
 }

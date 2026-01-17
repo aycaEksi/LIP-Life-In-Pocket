@@ -73,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             final cards = <_ProfileCardData>[
                               _ProfileCardData(
                                 title: "Avatar",
-                                subtitle: "Personalize your avatar",
+                                subtitle: "Avatarınızı kişiselleştirin",
                                 icon: Icons.person_outline,
                                 tint: const Color(0xFF7B2CFF),
                                 onTap: () {
@@ -88,8 +88,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 },
                               ),
                               _ProfileCardData(
-                                title: "Settings",
-                                subtitle: "Log out or view Profile",
+                                title: "Ayarlar",
+                                subtitle: "Çıkış yapın veya profili görüntüleyin",
                                 icon: Icons.settings_outlined,
                                 tint: const Color(0xFF4B55FF),
                                 onTap: () {
@@ -104,9 +104,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 },
                               ),
                               _ProfileCardData(
-                                title: "Mood",
+                                title: "Ruh Hali",
                                 subtitle:
-                                    "Rate your day and get your AI\nadvice!",
+                                    "Gününüzü puanlayın ve AI tavsiyenizi\nalın!",
                                 icon: Icons.emoji_emotions_outlined,
                                 tint: const Color(0xFFB000FF),
                                 onTap: () {
@@ -222,7 +222,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Align(
             alignment: Alignment.center,
             child: Text(
-              "Profile",
+              "Profil",
               style: TextStyle(
                 fontSize: 46,
                 fontWeight: FontWeight.w700,

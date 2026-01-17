@@ -205,6 +205,36 @@ class ApiService {
 
   // ==================== DAY ENTRIES ====================
   
+  // Resim upload
+  Future<String?> uploadPhoto(String filePath) async {
+    try {
+      final token = await getToken();
+      if (token == null) throw Exception('No token');
+      
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/upload-photo'),
+      );
+      
+      request.headers['Authorization'] = 'Bearer $token';
+      request.files.add(await http.MultipartFile.fromPath('photo', filePath));
+      
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(responseBody);
+        // Backend'den dönen path'i al (örn: "/uploads/photo_1234567890.jpg")
+        return data['path'] ?? data['url'];
+      }
+      
+      return null;
+    } catch (e) {
+      print('Upload photo error: $e');
+      return null;
+    }
+  }
+  
   Future<http.Response> saveDayEntry({
     required String date,
     String? note,
@@ -217,8 +247,8 @@ class ApiService {
       body: {
         'date': date,
         'note': note,
-        'photo1_url': photo1Url,
-        'photo2_url': photo2Url,
+        'photo1_path': photo1Url,  // Backend'de photo1_path bekleniyor
+        'photo2_path': photo2Url,  // Backend'de photo2_path bekleniyor
       },
     );
   }
@@ -368,19 +398,48 @@ class ApiService {
     );
   }
 
+  /// AI'dan mood insight al (bildirimler için)
+  Future<http.Response> getMoodInsight({
+    required int energy,
+    required int happiness,
+    required int stress,
+    String? note,
+  }) async {
+    return await authenticatedRequest(
+      method: 'POST',
+      endpoint: 'moods/insight',
+      body: {
+        'energy': energy,
+        'happiness': happiness,
+        'stress': stress,
+        'note': note,
+      },
+    );
+  }
+
   // ==================== AVATAR ====================
   
   Future<http.Response> updateAvatar({
+    String? gender,
+    String? skinTone,
+    String? eyeColor,
     String? hairStyle,
     String? hairColor,
-    String? outfit,
-    String? outfitColor,
+    String? topClothing,
+    String? topClothingColor,
+    String? bottomClothing,
+    String? bottomClothingColor,
   }) async {
     final body = <String, dynamic>{};
+    if (gender != null) body['gender'] = gender;
+    if (skinTone != null) body['skin_tone'] = skinTone;
+    if (eyeColor != null) body['eye_color'] = eyeColor;
     if (hairStyle != null) body['hair_style'] = hairStyle;
     if (hairColor != null) body['hair_color'] = hairColor;
-    if (outfit != null) body['outfit'] = outfit;
-    if (outfitColor != null) body['outfit_color'] = outfitColor;
+    if (topClothing != null) body['top_clothing'] = topClothing;
+    if (topClothingColor != null) body['top_clothing_color'] = topClothingColor;
+    if (bottomClothing != null) body['bottom_clothing'] = bottomClothing;
+    if (bottomClothingColor != null) body['bottom_clothing_color'] = bottomClothingColor;
     
     return await authenticatedRequest(
       method: 'POST',

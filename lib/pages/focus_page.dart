@@ -106,7 +106,7 @@ class _FocusPageState extends State<FocusPage> {
       if (day.hydrationCount >= 10) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Hydration goal reached!")),
+            const SnackBar(content: Text("Su içme hedefi tamamlandı!")),
           );
         }
         return;
@@ -131,7 +131,7 @@ class _FocusPageState extends State<FocusPage> {
       if (day.movementCount >= 2) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Movement goal reached!")),
+            const SnackBar(content: Text("Hareket hedefi tamamlandı!")),
           );
         }
         return;
@@ -341,7 +341,7 @@ class _FocusPageState extends State<FocusPage> {
           _timerControls(),
           const SizedBox(height: 14),
           Text(
-            "Keep focusing, you're doing great!",
+            "Odaklanmaya devam et, harika gidiyorsun!",
             style: TextStyle(
               color: Colors.deepPurple.shade200,
               fontWeight: FontWeight.w700,
@@ -415,20 +415,20 @@ class _FocusPageState extends State<FocusPage> {
   Widget _timerControls() {
     final primary = _running
         ? _actionButton(
-            text: "Stop",
+            text: "Durdur",
             icon: Icons.stop_rounded,
             filled: true,
             onTap: _stop,
           )
         : _actionButton(
-            text: "Start",
+            text: "Başlat",
             icon: Icons.play_arrow_rounded,
             filled: true,
             onTap: _start,
           );
 
     final secondary = _actionButton(
-      text: "Restart",
+      text: "Yeniden Başlat",
       icon: Icons.refresh_rounded,
       filled: false,
       onTap: _restart,
@@ -600,7 +600,7 @@ class _FocusPageState extends State<FocusPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Personal Reminders",
+              "Kişisel Hatırlatıcılar",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -729,7 +729,7 @@ class _FocusPageState extends State<FocusPage> {
               ),
             ),
             IconButton(
-              tooltip: "Delete",
+              tooltip: "Sil",
               onPressed: () => _deletePersonal(r),
               icon: Icon(
                 Icons.delete_outline,
