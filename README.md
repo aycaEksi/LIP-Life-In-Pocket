@@ -4,7 +4,6 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Flutter](https://img.shields.io/badge/Flutter-3.4+-02569B?logo=flutter)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 
 **Your Personal Life Assistant - Track, Plan, and Thrive** 🚀
 
@@ -223,7 +222,7 @@ lib/
 - **Material Design** - UI components
 
 ### Data Storage
-- **SQLite** (`sqflite`) - Local database for photos and offline data
+- **SQLite** (`sqflite`) - Local database for offline data
 - **Shared Preferences** - Simple key-value storage
 - **Backend API** - REST API for user data synchronization
 
@@ -280,79 +279,15 @@ Update API endpoints in `lib/services/api_service.dart`:
 ```dart
 static const String baseUrl = 'YOUR_BACKEND_URL/api';
 ```
-
----
-
-## 🚧 Roadmap
-
-### Version 1.1
-- [ ] Dark mode support
-- [ ] Export data to PDF/CSV
-- [ ] Cloud photo backup
-- [ ] Widget for home screen
-
-### Version 1.2
-- [ ] Multi-language support (Turkish, English)
-- [ ] Time capsule feature activation
-- [ ] Statistics and insights dashboard
-- [ ] Social features (share achievements)
-
-### Version 2.0
-- [ ] AI-powered mood insights
-- [ ] Habit tracking
-- [ ] Goal setting with progress tracking
-- [ ] Integration with health apps
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Coding Standards
-- Follow Dart/Flutter style guidelines
-- Add comments for complex logic
-- Write meaningful commit messages
-- Test on multiple platforms before PR
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ---
 
 ## 👥 Authors
 
 **LiP Development Team**
-- Project Lead & Developer: [Your Name]
-- UI/UX Design: [Designer Name]
+- AYCA ŞÜKRAN EKŞİ - HAYAT BİLİCİ
 
 ---
 
-## 🙏 Acknowledgments
-
-- Flutter team for the amazing framework
-- Community packages that made development faster
-- Beta testers for valuable feedback
-- All contributors to this project
-
----
-
-## 📞 Support
-
-- **Issues**: [GitHub Issues](https://github.com/yourusername/LIP-Life-In-Pocket/issues)
-- **Email**: support@lipapp.com
-- **Documentation**: [Wiki](https://github.com/yourusername/LIP-Life-In-Pocket/wiki)
-
----
 
 <div align="center">
 
