@@ -1,8 +1,8 @@
 class FocusDay {
   final int userId;
-  final String date; // yyyy-mm-dd
-  final int hydrationCount; // 0..10
-  final int movementCount; // 0..2
+  final String date;
+  final int hydrationCount;
+  final int movementCount;
 
   const FocusDay({
     required this.userId,
@@ -13,6 +13,8 @@ class FocusDay {
 
   static const int hydrationTarget = 10;
   static const int movementTarget = 2;
+
+// bu sayfada su ve yürüyüş hatırlatmaları var -- kaydetme çalışmıyordu düzelttim -hayat
 
   FocusDay copyWith({int? hydrationCount, int? movementCount}) {
     return FocusDay(
@@ -51,9 +53,9 @@ class FocusDay {
   }
 
   Map<String, Object?> toRow() => {
-    'user_id': userId,
-    'date': date,
-    'hydration_count': hydrationCount,
-    'movement_count': movementCount,
-  };
+        'user_id': userId,
+        'date': date,
+        'hydration_count': hydrationCount,
+        'movement_count': movementCount,
+      };
 }

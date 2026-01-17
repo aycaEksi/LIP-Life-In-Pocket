@@ -3,7 +3,7 @@ class Task {
   final int userId;
   final String title;
   final String? description;
-  final String taskType; // daily, weekly, monthly, yearly
+  final String taskType; // günlük aylık fln yazacak -hayat
   final bool isCompleted;
   final String? dueDate;
   final String? createdAt;

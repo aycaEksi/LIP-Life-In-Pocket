@@ -19,7 +19,7 @@ class ApiTodosRepository implements TodosRepository {
   Future<List<TaskItem>> getTasks(String period) async {
     try {
       final response = await ApiService.instance.getTasks(period: period);
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => TaskItem.fromApi(json)).toList();
@@ -86,7 +86,7 @@ class ApiTodosRepository implements TodosRepository {
   Future<List<CapsuleItem>> getCapsules() async {
     try {
       final response = await ApiService.instance.getCapsules();
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => CapsuleItem.fromApi(json)).toList();
@@ -123,7 +123,6 @@ class ApiTodosRepository implements TodosRepository {
   }
 }
 
-/// simple global access (later DI)
 class Repos {
   static final TodosRepository todos = ApiTodosRepository();
 }

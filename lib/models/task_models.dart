@@ -38,6 +38,8 @@ class TaskItem {
   }
 }
 
+// UZAY KAPSÜLÜ ŞEKLİNDE GİZLİYOR METNİ !!! :) /-hayat
+
 class CapsuleItem {
   final int id;
   final String note;

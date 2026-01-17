@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Uygulama renk paleti - buradan tüm renkleri kolayca değiştirebilirsiniz
+/// referans üstüne ai ile oluşturulan tema dosyamız
 class AppColors {
   // Açık Mod Renkleri - Mor/Pembe Palet
   static const lightPrimary = Color(0xFF9E6B99); // Orta Mor-Pembe

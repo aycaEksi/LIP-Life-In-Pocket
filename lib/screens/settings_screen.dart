@@ -15,7 +15,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // --- colors close to reference ---
+  
   static const _bgTopLight = Color(0xFFF6EEFF);
   static const _bgBottomLight = Color(0xFFF0E9FF);
   static const _bgTopDark = Color(0xFF140824);
@@ -26,11 +26,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   static const _purple = Color(0xFF7B2CFF);
 
-  // log out gradient (red -> magenta)
   static const _logoutA = Color(0xFFEF2B2B);
   static const _logoutB = Color(0xFFD8009A);
   Future<void> _logout() async {
-    // Çıkış yapma onayı
+    
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -50,10 +49,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (shouldLogout == true && mounted) {
-      // API servisi ile logout yap
+      
       await ApiService.instance.logout();
 
-      // Login ekranına dön
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -141,7 +139,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
 
-          // Theme Toggle Button
           ThemeToggleButton(themeManager: widget.themeManager),
         ],
       ),
@@ -175,7 +172,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const Spacer(),
-          const SizedBox(width: 40), // balance center title
+          const SizedBox(width: 40), 
         ],
       ),
     );

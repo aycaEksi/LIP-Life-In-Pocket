@@ -1,5 +1,5 @@
 class DayEntry {
-  final String date; // yyyy-mm-dd
+  final String date;
   final String? note;
   final String? photo1Path;
   final String? photo2Path;
@@ -30,7 +30,6 @@ class DayEntry {
   }
 }
 
-// helper (same as before)
 String ymd(DateTime d) {
   final yy = d.year.toString().padLeft(4, '0');
   final mm = d.month.toString().padLeft(2, '0');

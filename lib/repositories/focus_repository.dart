@@ -11,7 +11,5 @@ abstract class FocusRepository {
   Future<void> togglePersonalReminder(int id, bool done);
   Future<void> deletePersonalReminder(int id);
 
-  /// Called on app open (and also on page open):
-  /// ensures daily data is for "today".
   Future<void> ensureTodaySeeded();
 }

@@ -39,7 +39,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // background
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
@@ -133,7 +132,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     data: cards[i],
                                     index: i,
                                     isDark: isDark,
-                                    // square-ish on narrow too
                                     size: math.min(330, w),
                                   ),
                                 ),
@@ -176,7 +174,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
 
-          // theme toggle button
           ThemeToggleButton(themeManager: widget.themeManager),
         ],
       ),
