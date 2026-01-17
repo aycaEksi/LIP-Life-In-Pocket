@@ -367,7 +367,7 @@ class _GamePageState extends State<GamePage> {
               ),
               SizedBox(height: 2),
               Text(
-                "Turkish word puzzle game",
+                "Türkçe kelime bulma oyunu",
                 style: TextStyle(
                   color: _muted,
                   fontWeight: FontWeight.w600,
@@ -413,7 +413,7 @@ class _GamePageState extends State<GamePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              "Game Controls",
+              "Oyun Kontrolleri",
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w900,
@@ -436,7 +436,7 @@ class _GamePageState extends State<GamePage> {
                     ),
                     child: DropdownButton<int>(
                       value: _size,
-                      hint: const Text("Word Size", style: TextStyle(color: _muted)),
+                      hint: const Text("Kelime Uzunluğu", style: TextStyle(color: _muted)),
                       isExpanded: true,
                       underline: const SizedBox.shrink(),
                       items: const [4, 5, 6]
@@ -474,7 +474,7 @@ class _GamePageState extends State<GamePage> {
                       ],
                     ),
                     child: Text(
-                      _dictLoaded ? "Start" : "Loading",
+                      _dictLoaded ? "Başlat" : "Yüklüyor",
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -565,7 +565,7 @@ class _GamePageState extends State<GamePage> {
                   ],
                 ),
                 child: const Text(
-                  "Submit Guess",
+                  "Tahmini Gönder",
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -589,7 +589,7 @@ class _GamePageState extends State<GamePage> {
                   border: Border.all(color: _stroke),
                 ),
                 child: const Text(
-                  "⌫ Delete",
+                  "⌫ Sil",
                   style: TextStyle(
                     color: _redA,
                     fontWeight: FontWeight.w900,

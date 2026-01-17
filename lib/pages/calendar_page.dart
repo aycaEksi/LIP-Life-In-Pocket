@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../models/day_entry_model.dart';
 import '../repositories/calendar_repository.dart' hide ymd;
+import '../services/api_service.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -80,7 +81,7 @@ class _CalendarPageState extends State<CalendarPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Saved')));
+    ).showSnackBar(const SnackBar(content: Text('Kaydedildi')));
   }
 
   Future<void> _deleteTodayEntry() async {
@@ -127,11 +128,24 @@ class _CalendarPageState extends State<CalendarPage> {
       final path = result.files.single.path;
       if (path == null) return;
 
+      // Local kopyayı oluştur
       final stored = await _copyLocalFileToAppDir(path);
 
+      // Backend'e upload et ve URL'i al
+      final photoUrl = await _repo.uploadPhoto(stored);
+      
+      if (photoUrl == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Fotoğraf yüklenemedi')),
+          );
+        }
+        return;
+      }
+
       setState(() {
-        if (slot == 1) _photo1 = stored;
-        if (slot == 2) _photo2 = stored;
+        if (slot == 1) _photo1 = photoUrl;
+        if (slot == 2) _photo2 = photoUrl;
       });
 
       await _saveToday();
@@ -146,11 +160,24 @@ class _CalendarPageState extends State<CalendarPage> {
     );
     if (x == null) return;
 
+    // Local kopyayı oluştur
     final stored = await _copyToAppDir(x);
 
+    // Backend'e upload et ve URL'i al
+    final photoUrl = await _repo.uploadPhoto(stored);
+    
+    if (photoUrl == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Fotoğraf yüklenemedi')),
+        );
+      }
+      return;
+    }
+
     setState(() {
-      if (slot == 1) _photo1 = stored;
-      if (slot == 2) _photo2 = stored;
+      if (slot == 1) _photo1 = photoUrl;
+      if (slot == 2) _photo2 = photoUrl;
     });
 
     await _saveToday();
@@ -172,23 +199,23 @@ class _CalendarPageState extends State<CalendarPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Journal Entry'),
+        title: const Text('Günlük Kayıt'),
         content: TextField(
           controller: ctrl,
           maxLines: 8,
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
-            hintText: 'Write your thoughts...',
+            hintText: 'Düşüncelerinizi yazın...',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('İptal'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Save'),
+            child: const Text('Kaydet'),
           ),
         ],
       ),
@@ -328,7 +355,7 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             SizedBox(height: 2),
             Text(
-              "Your digital diary for daily moments",
+              "Günlük anlarınız için dijital günlük",
               style: TextStyle(color: _muted, fontWeight: FontWeight.w600),
             ),
           ],
@@ -607,7 +634,7 @@ class _CalendarPageState extends State<CalendarPage> {
                           const SizedBox(width: 8),
                           if (_isToday)
                             const Text(
-                              "✧ Today",
+                              "✧ Bugün",
                               style: TextStyle(
                                 color: _dot,
                                 fontWeight: FontWeight.w900,
@@ -628,7 +655,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 const Icon(Icons.calendar_month, color: _dot, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  "Photos (${(_photo1 != null ? 1 : 0) + (_photo2 != null ? 1 : 0)}/2)",
+                  "Fotoğraflar (${(_photo1 != null ? 1 : 0) + (_photo2 != null ? 1 : 0)}/2)",
                   style: const TextStyle(
                     color: _dot,
                     fontWeight: FontWeight.w900,
@@ -645,7 +672,7 @@ class _CalendarPageState extends State<CalendarPage> {
                 Icon(Icons.menu_book_rounded, color: _dot, size: 18),
                 SizedBox(width: 8),
                 Text(
-                  "Journal Entry",
+                  "Günlük Kayıt",
                   style: TextStyle(color: _dot, fontWeight: FontWeight.w900),
                 ),
               ],
@@ -666,7 +693,7 @@ class _CalendarPageState extends State<CalendarPage> {
         borderRadius: BorderRadius.circular(999),
       ),
       child: const Text(
-        "Editable",
+        "Düzenlenebilir",
         style: TextStyle(
           color: _purpleA,
           fontWeight: FontWeight.w900,
@@ -714,7 +741,7 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                "Add Photo",
+                "Fotoğraf Ekle",
                 style: TextStyle(
                   color: canEdit ? _dot : Colors.grey.shade400,
                   fontWeight: FontWeight.w800,
@@ -733,7 +760,9 @@ class _CalendarPageState extends State<CalendarPage> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
             image: DecorationImage(
-              image: FileImage(File(path)),
+              image: path.startsWith('http') || path.startsWith('/uploads')
+                  ? NetworkImage('${ApiService.baseUrl.replaceAll('/api', '')}$path')
+                  : FileImage(File(path)) as ImageProvider,
               fit: BoxFit.cover,
             ),
           ),

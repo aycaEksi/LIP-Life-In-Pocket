@@ -27,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? _avatarData;
   String _moodStatus = 'Yüklüyor...';
   bool _isMoodLoading = true;
+  String _userName = 'Kullanıcı';
 
   Timer? _clockTimer;
 
@@ -34,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     print('🚀 HomeScreen initState başladı');
+    _loadUserName();
     _loadAvatar();
     _loadMoodStatus();
     print('🚀 HomeScreen initState tamamlandı');
@@ -50,21 +52,75 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  Future<void> _loadUserName() async {
+    try {
+      final user = await ApiService.instance.getUser();
+      if (user != null && user['name'] != null && mounted) {
+        setState(() {
+          _userName = user['name'];
+        });
+      }
+    } catch (e) {
+      debugPrint('Kullanıcı adı yükleme hatası: $e');
+    }
+  }
+
   Future<void> _loadAvatar() async {
     try {
+      print('🎭 Avatar yükleniyor...');
       final response = await ApiService.instance.getAvatar();
+      
+      print('🎭 Avatar Response Status: ${response.statusCode}');
+      print('🎭 Avatar Response Body: ${response.body}');
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data != null && mounted) {
+        print('🎭 Avatar Data: $data');
+        if (mounted) {
           setState(() {
             _parseAvatarFromApi(data);
+          });
+          print('🎭 Avatar parsed: $_avatarData');
+        }
+      } else {
+        // API'den veri gelmezse default avatar
+        print('⚠️ Avatar API hatası, default avatar ayarlanıyor');
+        if (mounted) {
+          setState(() {
+            _avatarData = {
+              'gender': 'female',
+              'skinTone': 'light',
+              'eye': 'female-eye',
+              'eyeColor': '#8B4513',
+              'hair': null,
+              'hairColor': '#3D2817',
+              'bottom': null,
+              'bottomColor': '#0000FF',
+              'top': null,
+              'topColor': '#FF0000',
+            };
           });
         }
       }
     } catch (e) {
-      // Hata durumunda sessizce devam et
-      debugPrint('Avatar yükleme hatası: $e');
+      print('❌ Avatar yükleme hatası: $e');
+      // Hata durumunda default avatar göster
+      if (mounted) {
+        setState(() {
+          _avatarData = {
+            'gender': 'female',
+            'skinTone': 'light',
+            'eye': 'female-eye',
+            'eyeColor': '#8B4513',
+            'hair': null,
+            'hairColor': '#3D2817',
+            'bottom': null,
+            'bottomColor': '#0000FF',
+            'top': null,
+            'topColor': '#FF0000',
+          };
+        });
+      }
     }
   }
 
@@ -118,15 +174,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _parseAvatarFromApi(Map<String, dynamic> data) {
     try {
+      final gender = data['gender'] ?? 'male';
+      final skinTone = data['skin_tone'] ?? 'light';
+      
       _avatarData = {
-        'gender': 'male', // API'den gelecek
-        'skinTone': 'light', // API'den gelecek
-        'eye': 'male-eye', // API'den gelecek
-        'eyeColor': '#8B4513', // API'den gelecek
-        'bottom': null,
-        'bottomColor': data['outfit_color'] ?? '#000000',
-        'top': data['outfit'] ?? null,
-        'topColor': data['outfit_color'] ?? '#FFFFFF',
+        'gender': gender,
+        'skinTone': skinTone,
+        'eye': gender == 'male' ? 'male-eye' : 'female-eye',
+        'eyeColor': data['eye_color'] ?? '#8B4513',
+        'hair': data['hair_style'],
+        'hairColor': data['hair_color'] ?? '#3D2817',
+        'bottom': data['bottom_clothing'],
+        'bottomColor': data['bottom_clothing_color'] ?? '#0000FF',
+        'top': data['top_clothing'],
+        'topColor': data['top_clothing_color'] ?? '#FF0000',
       };
     } catch (e) {
       debugPrint('Avatar parse hatası: $e');
@@ -265,7 +326,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               child: ClipOval(
                                 child: _avatarData != null
-                                    ? _buildAvatarStack(avatarSize)
+                                    ? Transform.translate(
+                                        offset: Offset(0, avatarSize * 0.50),
+                                        child: Transform.scale(
+                                          scale: 2.2,
+                                          child: _buildAvatarStack(avatarSize),
+                                        ),
+                                      )
                                     : Icon(
                                         Icons.person,
                                         size: avatarSize * 0.44,
@@ -283,7 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: _glassSquareButton(
                                 size: btnSize,
                                 icon: Icons.person_outline,
-                                hoverLabel: 'Profile',
+                                hoverLabel: 'Profil',
                                 isDark: isDark,
                                 onTap: () {
                                   Navigator.push(
@@ -293,7 +360,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                         themeManager: widget.themeManager,
                                       ),
                                     ),
-                                  );
+                                  ).then((_) {
+                                    // Profile screen'den döndüğünde avatar'ı yeniden yükle
+                                    _loadAvatar();
+                                  });
                                 },
                               ),
                             ),
@@ -302,7 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: _glassSquareButton(
                                 size: btnSize,
                                 icon: Icons.access_time_rounded,
-                                hoverLabel: 'Focus Mode',
+                                hoverLabel: 'Odak Modu',
                                 isDark: isDark,
                                 onTap: () {
                                   Navigator.push(
@@ -319,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: _glassSquareButton(
                                 size: btnSize,
                                 icon: Icons.calendar_month,
-                                hoverLabel: 'Diary Calendar',
+                                hoverLabel: 'Günlük Girişi',
                                 isDark: isDark,
                                 onTap: () {
                                   Navigator.push(
@@ -336,7 +406,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: _glassSquareButton(
                                 size: btnSize,
                                 icon: Icons.check_box_outlined,
-                                hoverLabel: 'To-Do List',
+                                hoverLabel: 'Yapılacaklar',
                                 isDark: isDark,
                                 onTap: () {
                                   Navigator.push(
@@ -372,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Row(
           children: [
             Text(
-              'Ayça Ekşi',
+              _userName,
               style: TextStyle(
                 fontSize: 34,
                 fontWeight: FontWeight.w800,
@@ -583,6 +653,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final skinTone = data['skinTone'];
     final eye = data['eye'];
     final eyeColor = _hexToColor(data['eyeColor']);
+    final hair = data['hair'];
+    final hairColor = _hexToColor(data['hairColor']);
     final bottom = data['bottom'];
     final bottomColor = _hexToColor(data['bottomColor']);
     final top = data['top'];
@@ -632,6 +704,18 @@ class _HomeScreenState extends State<HomeScreen> {
             fit: BoxFit.cover,
           ),
         ),
+        // Hair
+        if (hair != null && hair != 'null')
+          ColorFiltered(
+            colorFilter: ColorFilter.mode(
+              hairColor,
+              BlendMode.modulate,
+            ),
+            child: Image.asset(
+              'assets/images/$hair.png',
+              fit: BoxFit.cover,
+            ),
+          ),
       ],
     );
   }

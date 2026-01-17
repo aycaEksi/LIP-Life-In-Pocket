@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../models/mood.dart';
 import '../services/api_service.dart';
+import '../services/notification_service.dart';
 import '../theme/theme_manager.dart';
 import '../widgets/theme_toggle_button.dart';
 
@@ -120,7 +121,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
                                   if (_aiMotivationMessage != null)
                                     _aiBox(
                                       isDark: isDark,
-                                      title: "AI Motivation",
+                                      title: "AI Motivasyon",
                                       text: _aiMotivationMessage!,
                                     ),
                                   if (_isLoadingAI) _aiLoadingBox(isDark),
@@ -129,7 +130,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
                                     isDark: isDark,
                                     icon: Icons.bolt_rounded,
                                     iconColor: const Color(0xFFFFA02D),
-                                    label: "Energy",
+                                    label: "Enerji",
                                     value: energy,
                                     valueColor: const Color(0xFFFFA02D),
                                     onChanged: (v) =>
@@ -140,7 +141,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
                                     isDark: isDark,
                                     icon: Icons.favorite_border_rounded,
                                     iconColor: const Color(0xFF20B16A),
-                                    label: "Happiness",
+                                    label: "Mutluluk",
                                     value: happiness,
                                     valueColor: const Color(0xFF20B16A),
                                     onChanged: (v) =>
@@ -151,7 +152,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
                                     isDark: isDark,
                                     icon: Icons.error_outline_rounded,
                                     iconColor: const Color(0xFFFF2D55),
-                                    label: "Stress",
+                                    label: "Stres",
                                     value: stress,
                                     valueColor: const Color(0xFFFF2D55),
                                     onChanged: (v) =>
@@ -194,7 +195,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
           const SizedBox(width: 8),
           const Spacer(),
           const Text(
-            "Daily Reflection",
+            "Günlük Yansıma",
             style: TextStyle(
               color: _purpleA,
               fontSize: 20,
@@ -212,7 +213,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
     return Column(
       children: [
         Text(
-          "How do you feel today?",
+          "Bugün nasıl hissediyorsunuz?",
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 34,
@@ -224,7 +225,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          "Take a moment to check in with yourself.",
+          "Kendinizi kontrol etmek için bir dakikanızı ayırın.",
           textAlign: TextAlign.center,
           style: TextStyle(
             color: isDark ? Colors.white60 : _muted,
@@ -335,7 +336,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
               Icon(Icons.save_outlined, color: Colors.white, size: 18),
               SizedBox(width: 10),
               Text(
-                "Save Reflection",
+                "Motivasyon Mesajı Al",
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
@@ -434,7 +435,7 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              'Preparing AI motivation...',
+              'AI motivasyon hazırlanıyor...',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: isDark ? Colors.white70 : _muted,
@@ -505,6 +506,14 @@ class _MoodSelectorScreenState extends State<MoodSelectorScreen> {
             _aiMotivationMessage = aiMessage ?? 'Motivasyon mesajı alınamadı.';
           });
         }
+
+        // Bildirim gönder ve 2 saatlik döngüyü başlat
+        await NotificationService.instance.sendMoodInsightNotification(
+          energy: energy.toInt(),
+          happiness: happiness.toInt(),
+          stress: stress.toInt(),
+          note: '',
+        );
       } else {
         throw Exception('Mood kaydedilemedi: ${response.statusCode}');
       }

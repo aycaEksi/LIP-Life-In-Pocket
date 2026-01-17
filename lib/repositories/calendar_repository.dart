@@ -5,6 +5,7 @@ import '../models/day_entry_model.dart';
 abstract class CalendarRepository {
   Future<Set<int>> getDaysWithDataInMonth(DateTime viewMonthFirstDay);
   Future<DayEntry?> getEntryByDate(DateTime date);
+  Future<String?> uploadPhoto(String filePath);
 
   Future<void> upsertEntry({
     required DateTime date,
@@ -17,6 +18,11 @@ abstract class CalendarRepository {
 }
 
 class ApiCalendarRepository implements CalendarRepository {
+  @override
+  Future<String?> uploadPhoto(String filePath) async {
+    return await ApiService.instance.uploadPhoto(filePath);
+  }
+
   @override
   Future<Set<int>> getDaysWithDataInMonth(DateTime viewMonthFirstDay) async {
     try {

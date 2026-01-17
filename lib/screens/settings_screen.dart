@@ -34,16 +34,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Log Out'),
-        content: const Text('Are you sure you want to log out?'),
+        title: const Text('Çıkış Yap'),
+        content: const Text('Çıkış yapmak istediğinize emin misiniz?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('İptal'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Log Out'),
+            child: const Text('Çıkış Yap'),
           ),
         ],
       ),
@@ -103,8 +103,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _settingsCard(
                               isDark: isDark,
                               icon: Icons.person_outline,
-                              title: 'Profile Settings',
-                              subtitle: 'Manage Your Profile',
+                              title: 'Profil Ayarları',
+                              subtitle: 'Profilinizi Yönetin',
                               onTap: () {
                                 // Profil ayarları
                               },
@@ -113,8 +113,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _settingsCard(
                               isDark: isDark,
                               icon: Icons.notifications_none_rounded,
-                              title: 'Notifications',
-                              subtitle: 'Manage the Notifications',
+                              title: 'Bildirimler',
+                              subtitle: 'Bildirimleri Yönetin',
                               onTap: () {
                                 // Bildirim ayarları
                               },
@@ -123,8 +123,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             _settingsCard(
                               isDark: isDark,
                               icon: Icons.palette_outlined,
-                              title: 'Theme',
-                              subtitle: 'Manage the Theme',
+                              title: 'Tema',
+                              subtitle: 'Temayı Yönetin',
                               onTap: () {
                                 // Tema ayarları
                               },
@@ -167,7 +167,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(width: 8),
           const Spacer(),
           Text(
-            "Settings",
+            "Ayarlar",
             style: TextStyle(
               color: isDark ? Colors.white : _purple,
               fontSize: 20,
@@ -284,7 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         child: const Center(
           child: Text(
-            "Log Out",
+            "Çıkış Yap",
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w900,

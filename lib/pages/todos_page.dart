@@ -28,13 +28,13 @@ class _TodosPageState extends State<TodosPage> {
   String _periodLabel(Period p) {
     switch (p) {
       case Period.daily:
-        return "Daily";
+        return "Günlük";
       case Period.weekly:
-        return "Weekly";
+        return "Haftalık";
       case Period.monthly:
-        return "Monthly";
+        return "Aylık";
       case Period.yearly:
-        return "Yearly";
+        return "Yıllık";
     }
   }
 
@@ -722,7 +722,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
     final msg = _noteCtrl.text.trim();
     if (msg.isEmpty || _unlockAt == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Write a message and pick a date.")),
+        const SnackBar(content: Text("Bir mesaj yazın ve tarih seçin.")),
       );
       return;
     }
@@ -735,7 +735,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
         setState(() {});
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("Time capsule created!")));
+        ).showSnackBar(const SnackBar(content: Text("Zaman kapsülü oluşturuldu!")));
       }
     } catch (e) {
       if (mounted) {
@@ -753,7 +753,7 @@ class _TimeCapsulePageState extends State<TimeCapsulePage> {
         setState(() {});
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text("Capsule deleted")));
+        ).showSnackBar(const SnackBar(content: Text("Kapsül silindi")));
       }
     } catch (e) {
       if (mounted) {

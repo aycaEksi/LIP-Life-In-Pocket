@@ -23,6 +23,8 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
   String selectedSkinTone = 'light'; // light veya dark
   String selectedEye = 'male-eye'; // Göz default olarak seçili
   Color selectedEyeColor = const Color(0xFF8B4513); // Kahverengi
+  String? selectedHair;
+  Color selectedHairColor = const Color(0xFF3D2817); // Kahverengi saç
   String? selectedBottomWear;
   Color selectedBottomColor = Colors.blue;
   String? selectedTopWear;
@@ -35,11 +37,13 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
   final Map<String, Map<String, List<String>>> avatarParts = {
     'male': {
       'eye': ['male-eye'],
+      'hair': ['male-hair1', 'male-hair2'],
       'bottom': ['male-pant', 'male-sort'],
       'top': ['male-shirt', 'male-sweat'],
     },
     'female': {
       'eye': ['female-eye'],
+      'hair': ['female-hair1', 'female-hair2', 'female-hair3', 'female-hair4'],
       'bottom': ['female-pant', 'etek'],
       'top': ['female-tisort', 'female-uzun-tisort', 'female-sweat'],
     },
@@ -60,10 +64,42 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
         if (data != null && mounted) {
           setState(() {
             // Backend'den gelen verilerle avatar'ı güncelle
-            // Şimdilik basit bir yapı kullanıyoruz
-            selectedTopWear = data['outfit'];
-            if (data['outfit_color'] != null) {
-              selectedTopColor = _hexToColor(data['outfit_color']);
+            
+            // Cinsiyet
+            if (data['gender'] != null) {
+              selectedGender = data['gender'];
+            }
+            
+            // Ten rengi
+            if (data['skin_tone'] != null) {
+              selectedSkinTone = data['skin_tone'];
+            }
+            
+            // Göz rengi
+            if (data['eye_color'] != null) {
+              selectedEyeColor = _hexToColor(data['eye_color']);
+            }
+            // Göz tipini cinsiyete göre ayarla
+            selectedEye = selectedGender == 'male' ? 'male-eye' : 'female-eye';
+            
+            // Saç
+            if (data['hair_style'] != null) {
+              selectedHair = data['hair_style'];
+            }
+            if (data['hair_color'] != null) {
+              selectedHairColor = _hexToColor(data['hair_color']);
+            }
+            
+            // Üst giysi
+            selectedTopWear = data['top_clothing'];
+            if (data['top_clothing_color'] != null) {
+              selectedTopColor = _hexToColor(data['top_clothing_color']);
+            }
+            
+            // Alt giysi
+            selectedBottomWear = data['bottom_clothing'];
+            if (data['bottom_clothing_color'] != null) {
+              selectedBottomColor = _hexToColor(data['bottom_clothing_color']);
             }
           });
         }
@@ -152,6 +188,8 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                               const SizedBox(width: 8),
                               _buildTab('Göz', 'eye', Icons.visibility),
                               const SizedBox(width: 8),
+                              _buildTab('Saç', 'hair', Icons.face_retouching_natural),
+                              const SizedBox(width: 8),
                               _buildTab('Alt', 'bottom', Icons.checkroom),
                               const SizedBox(width: 8),
                               _buildTab('Üst', 'top', Icons.checkroom_outlined),
@@ -228,21 +266,7 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                     },
                   ),
 
-                  // 2. Göz (ColorFiltered ile renklendirilebilir)
-                  ColorFiltered(
-                    colorFilter: ColorFilter.mode(
-                      selectedEyeColor,
-                      BlendMode.modulate,
-                    ),
-                    child: Image.asset(
-                      'assets/images/$selectedEye.png',
-                      width: size,
-                      height: size,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-
-                  // 3. Alt giysi (ColorFiltered ile renklendirilebilir)
+                  // 2. Alt giysi (ColorFiltered ile renklendirilebilir)
                   if (selectedBottomWear != null)
                     ColorFiltered(
                       colorFilter: ColorFilter.mode(
@@ -257,7 +281,7 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                       ),
                     ),
 
-                  // 4. Üst giysi (ColorFiltered ile renklendirilebilir)
+                  // 3. Üst giysi (ColorFiltered ile renklendirilebilir)
                   if (selectedTopWear != null)
                     ColorFiltered(
                       colorFilter: ColorFilter.mode(
@@ -266,6 +290,35 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                       ),
                       child: Image.asset(
                         'assets/images/$selectedTopWear.png',
+                        width: size,
+                        height: size,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+
+                  // 4. Göz (ColorFiltered ile renklendirilebilir)
+                  ColorFiltered(
+                    colorFilter: ColorFilter.mode(
+                      selectedEyeColor,
+                      BlendMode.modulate,
+                    ),
+                    child: Image.asset(
+                      'assets/images/$selectedEye.png',
+                      width: size,
+                      height: size,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+
+                  // 5. Saç (ColorFiltered ile renklendirilebilir)
+                  if (selectedHair != null)
+                    ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        selectedHairColor,
+                        BlendMode.modulate,
+                      ),
+                      child: Image.asset(
+                        'assets/images/$selectedHair.png',
                         width: size,
                         height: size,
                         fit: BoxFit.contain,
@@ -288,6 +341,9 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
     if (category == 'eye') {
       currentColor = selectedEyeColor;
       label = 'Göz Rengi';
+    } else if (category == 'hair') {
+      currentColor = selectedHairColor;
+      label = 'Saç Rengi';
     } else if (category == 'bottom') {
       currentColor = selectedBottomColor;
       label = 'Alt Kıyafet Rengi';
@@ -344,6 +400,8 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
                 setState(() {
                   if (category == 'eye') {
                     selectedEyeColor = tempColor;
+                  } else if (category == 'hair') {
+                    selectedHairColor = tempColor;
                   } else if (category == 'bottom') {
                     selectedBottomColor = tempColor;
                   } else {
@@ -405,6 +463,8 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
         return _buildSkinToneOptions();
       case 'eye':
         return _buildPartOptions('eye', selectedEye);
+      case 'hair':
+        return _buildHairOptions();
       case 'bottom':
         return _buildPartOptions('bottom', selectedBottomWear);
       case 'top':
@@ -416,7 +476,7 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
 
   // Ten Rengi Seçenekleri
   Widget _buildSkinToneOptions() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -437,24 +497,24 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
         });
       },
       child: Container(
-        width: 120,
-        height: 120,
+        width: 100,
+        height: 100,
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.blue.withValues(alpha: 0.2)
               : Colors.grey[200],
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? Colors.blue : Colors.transparent,
-            width: 3,
+            width: 2,
           ),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
@@ -465,12 +525,111 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: isSelected ? Colors.blue : Colors.grey,
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Saç Seçenekleri (Numara butonları + Renk seçici)
+  Widget _buildHairOptions() {
+    final hairStyles = avatarParts[selectedGender]?['hair'] ?? [];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Renk seçici butonu
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Saç Rengi:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+              const SizedBox(width: 12),
+              InkWell(
+                onTap: () => _showColorPickerDialog('hair'),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: selectedHairColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.palette, color: Colors.white, size: 20),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // "Yok" seçeneği
+          _buildHairNumberButton(null, 'Yok'),
+          const SizedBox(height: 12),
+
+          // Saç modelleri (1, 2, 3, 4...)
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            alignment: WrapAlignment.center,
+            children: List.generate(
+              hairStyles.length,
+              (index) => _buildHairNumberButton(
+                hairStyles[index],
+                '${index + 1}',
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHairNumberButton(String? hairStyle, String label) {
+    final isSelected = selectedHair == hairStyle;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedHair = hairStyle;
+        });
+      },
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? Colors.blue.withValues(alpha: 0.2)
+              : Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Colors.blue : Colors.grey.shade400,
+            width: 2,
+          ),
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: isSelected ? Colors.blue : Colors.grey[700],
+            ),
+          ),
         ),
       ),
     );
@@ -660,7 +819,7 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
 
   // Cinsiyet Seçenekleri
   Widget _buildGenderOptions() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -680,21 +839,22 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
           selectedGender = gender;
           // Cinsiyet değişince göz otomatik değişsin, diğerleri sıfırlansın
           selectedEye = gender == 'male' ? 'male-eye' : 'female-eye';
+          selectedHair = null;
           selectedBottomWear = null;
           selectedTopWear = null;
         });
       },
       child: Container(
-        width: 120,
-        height: 120,
+        width: 100,
+        height: 100,
         decoration: BoxDecoration(
           color: isSelected
               ? Colors.blue.withValues(alpha: 0.2)
               : Colors.grey[200],
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? Colors.blue : Colors.transparent,
-            width: 3,
+            width: 2,
           ),
         ),
         child: Column(
@@ -702,14 +862,14 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
           children: [
             Icon(
               icon,
-              size: 48,
+              size: 40,
               color: isSelected ? Colors.blue : Colors.grey,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               label,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: isSelected ? Colors.blue : Colors.grey,
               ),
@@ -729,10 +889,17 @@ class _AvatarEditorScreenState extends State<AvatarEditorScreen> {
             '${color.blue.toRadixString(16).padLeft(2, '0')}';
       }
 
-      // API'ye avatar kaydet
+      // API'ye avatar kaydet - tüm özellikler
       await ApiService.instance.updateAvatar(
-        outfit: selectedTopWear,
-        outfitColor: colorToHex(selectedTopColor),
+        gender: selectedGender,
+        skinTone: selectedSkinTone,
+        eyeColor: colorToHex(selectedEyeColor),
+        hairStyle: selectedHair,
+        hairColor: selectedHair != null ? colorToHex(selectedHairColor) : null,
+        topClothing: selectedTopWear,
+        topClothingColor: selectedTopWear != null ? colorToHex(selectedTopColor) : null,
+        bottomClothing: selectedBottomWear,
+        bottomClothingColor: selectedBottomWear != null ? colorToHex(selectedBottomColor) : null,
       );
 
       if (mounted) {
